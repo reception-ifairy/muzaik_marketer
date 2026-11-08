@@ -1,0 +1,288 @@
+import fs from 'fs';
+import path from 'path';
+import { execFile } from 'child_process';
+import sharp from 'sharp';
+import { createCanvas, GlobalFonts, type SKRSContext2D } from '@napi-rs/canvas';
+import type { BrandKit, ParallaxScene } from '../src/muzaik';
+import { VIDEO_SIZE, type MaterialProject, type RenderFile, type Shot, type VideoFormat } from '../src/material';
+
+// The edit: every shot becomes an exact-length silent segment (Flow clip, animated Parallax scene, cover or text card),
+// the segments are joined and the music cut is laid under them (fades, −14 LUFS for YouTube). Each format is rendered
+// natively (cards and scenes are laid out for 16:9 or 9:16; a Flow clip of the other shape gets a blurred fill), so the
+// 9:16 version is not a crop of the 16:9 one. Text is drawn here (Audiowide/Rajdhani, OFL) — never by a video model.
+
+const FPS = 30;
+const FONT_DIR = path.join(path.dirname(new URL(import.meta.url).pathname), 'fonts');
+let fontsReady = false;
+function fonts() {
+  if (fontsReady) return;
+  GlobalFonts.registerFromPath(path.join(FONT_DIR, 'audiowide-400.ttf'), 'Audiowide');
+  GlobalFonts.registerFromPath(path.join(FONT_DIR, 'rajdhani-600.ttf'), 'Rajdhani');
+  fontsReady = true;
+}
+
+export class RenderError extends Error {}
+
+function run(cmd: string, args: string[], signal?: AbortSignal): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = execFile('nice', ['-n', '10', cmd, ...args], { maxBuffer: 32 * 1024 * 1024, signal }, (err, stdout, stderr) => {
+      if (err) {
+        const tail = String(stderr || err.message).trim().split('\n').slice(-6).join('\n');
+        reject(new RenderError(`${cmd} nie zadziałał: ${tail}`));
+      } else resolve(String(stdout));
+    });
+    child.stdin?.end();
+  });
+}
+
+export async function probeDuration(file: string): Promise<{ seconds: number; width: number; height: number } | null> {
+  try {
+    const out = await run('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height:format=duration', '-of', 'json', file]);
+    const j = JSON.parse(out) as { streams?: { width?: number; height?: number }[]; format?: { duration?: string } };
+    const s = j.streams?.[0];
+    const seconds = Number(j.format?.duration);
+    if (!s?.width || !s?.height || !Number.isFinite(seconds)) return null;
+    return { seconds, width: s.width, height: s.height };
+  } catch {
+    return null;
+  }
+}
+
+const frames = (sec: number) => Math.max(1, Math.round(sec * FPS));
+const encode = (n: number) => ['-r', String(FPS), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-an', '-frames:v', String(n)];
+
+// ---- Cards ----------------------------------------------------------------------------------------------------
+
+function fitFont(ctx: SKRSContext2D, text: string, family: string, maxWidth: number, start: number): number {
+  let size = start;
+  while (size > 12) {
+    ctx.font = `${size}px ${family}`;
+    if (ctx.measureText(text).width <= maxWidth) return size;
+    size -= 4;
+  }
+  return size;
+}
+
+function wrap(ctx: SKRSContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = '';
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (ctx.measureText(next).width > maxWidth && line) { lines.push(line); line = w; } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** A text card PNG at twice the video size (room for the slow zoom). Exported for tests. */
+export function drawCard(format: VideoFormat, brand: BrandKit, title: string, subtitle: string, muted = false): Buffer {
+  fonts();
+  const { width, height } = VIDEO_SIZE[format];
+  const W = width * 2;
+  const H = height * 2;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = brand.colors.bg;
+  ctx.fillRect(0, 0, W, H);
+  if (!muted) {
+    for (const [x, y, r, c] of [[0.2, 0.25, 0.7, brand.colors.cyan], [0.85, 0.8, 0.8, brand.colors.purple]] as const) {
+      const g = ctx.createRadialGradient(W * x, H * y, 0, W * x, H * y, Math.max(W, H) * r);
+      g.addColorStop(0, `${c}55`);
+      g.addColorStop(1, `${c}00`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+  const maxW = W * 0.82;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const base = format === '16:9' ? H * 0.13 : W * 0.12;
+  // Shrink until the title fits in at most 3 lines, each within the safe width (no word is ever dropped).
+  let size = base;
+  let lines: string[] = [];
+  for (; size > 24; size -= 6) {
+    ctx.font = `${size}px Audiowide`;
+    lines = wrap(ctx, title, maxW);
+    if (lines.length <= 3 && lines.every((l) => ctx.measureText(l).width <= maxW)) break;
+  }
+  ctx.font = `${size}px Audiowide`;
+  const grad = ctx.createLinearGradient(W * 0.1, 0, W * 0.9, 0);
+  grad.addColorStop(0, muted ? '#64748b' : brand.colors.cyan);
+  grad.addColorStop(0.55, muted ? '#94a3b8' : brand.colors.purple);
+  grad.addColorStop(1, muted ? '#64748b' : brand.colors.pink);
+  ctx.fillStyle = grad;
+  const lineH = size * 1.15;
+  const top = H / 2 - ((lines.length - 1) * lineH) / 2 - (subtitle ? size * 0.35 : 0);
+  if (!muted) { ctx.shadowColor = `${brand.colors.cyan}aa`; ctx.shadowBlur = size * 0.35; }
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, top + i * lineH));
+  ctx.shadowBlur = 0;
+  if (subtitle) {
+    const sub = fitFont(ctx, subtitle, 'Rajdhani', maxW, size * 0.42);
+    ctx.font = `${sub}px Rajdhani`;
+    ctx.fillStyle = muted ? '#94a3b8' : '#e2e8f0';
+    ctx.fillText(subtitle, W / 2, top + (lines.length - 1) * lineH + size * 1.05);
+  }
+  return canvas.toBuffer('image/png');
+}
+
+// ---- Segments -------------------------------------------------------------------------------------------------
+
+async function stillSegment(png: string, out: string, sec: number, format: VideoFormat, signal?: AbortSignal) {
+  const { width, height } = VIDEO_SIZE[format];
+  const n = frames(sec);
+  const z = `min(1+${(0.06 / n).toFixed(6)}*on,1.06)`;
+  await run('ffmpeg', ['-y', '-v', 'error', '-loop', '1', '-framerate', String(FPS), '-i', png,
+    '-vf', `zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${width}x${height}:fps=${FPS},setsar=1`,
+    ...encode(n), out], signal);
+}
+
+async function clipSegment(clip: string, out: string, sec: number, format: VideoFormat, signal?: AbortSignal) {
+  const { width, height } = VIDEO_SIZE[format];
+  const info = await probeDuration(clip);
+  const n = frames(sec);
+  const sameShape = info ? Math.abs(info.width / info.height - width / height) < 0.15 : true;
+  const filter = sameShape
+    ? `[0:v]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},fps=${FPS},setsar=1,tpad=stop_mode=clone:stop_duration=60[v]`
+    : `[0:v]fps=${FPS},split[a][b];[a]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:2,eq=brightness=-0.12[bg];` +
+      `[b]scale=${width}:${height}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,tpad=stop_mode=clone:stop_duration=60[v]`;
+  await run('ffmpeg', ['-y', '-v', 'error', '-i', clip, '-filter_complex', filter, '-map', '[v]', ...encode(n), out], signal);
+}
+
+/** The Parallax scene animated like on air: each layer drifts by its depth (Lissajous), deeper layers less. */
+async function parallaxSegment(layerFiles: { file: string; depth: number }[], intensity: number, bg: string, out: string, sec: number, format: VideoFormat, tmp: string, signal?: AbortSignal) {
+  const { width, height } = VIDEO_SIZE[format];
+  const pad = 1.16;
+  const lw = Math.round(width * pad);
+  const lh = Math.round(height * pad);
+  const prepared: { file: string; depth: number }[] = [];
+  for (const [i, l] of layerFiles.entries()) {
+    const f = path.join(tmp, `layer-${format.replace(':', 'x')}-${i}.png`);
+    await sharp(l.file).resize(lw, lh, { fit: 'cover' }).png().toFile(f);
+    prepared.push({ file: f, depth: l.depth });
+  }
+  const amp = (width * 0.035 * Math.min(100, Math.max(10, intensity))) / 50;
+  const args = ['-y', '-v', 'error', '-f', 'lavfi', '-i', `color=c=${bg}:s=${width}x${height}:r=${FPS}`];
+  for (const p of prepared) args.push('-loop', '1', '-framerate', String(FPS), '-i', p.file);
+  const chain: string[] = [];
+  let prev = '0:v';
+  prepared.forEach((p, i) => {
+    const a = (amp * p.depth).toFixed(1);
+    const label = `v${i + 1}`;
+    chain.push(`[${prev}][${i + 1}:v]overlay=x='(W-w)/2+${a}*sin(2*PI*t/9)':y='(H-h)/2+${(Number(a) * 0.6).toFixed(1)}*cos(2*PI*t/7)':eval=frame[${label}]`);
+    prev = label;
+  });
+  chain.push(`[${prev}]setsar=1[v]`);
+  args.push('-filter_complex', chain.join(';'), '-map', '[v]', ...encode(frames(sec)), out);
+  await run('ffmpeg', args, signal);
+}
+
+async function coverStill(cover: string, format: VideoFormat, out: string) {
+  const { width, height } = VIDEO_SIZE[format];
+  const W = width * 2;
+  const H = height * 2;
+  const side = Math.round(Math.min(W, H) * 0.72);
+  const bg = await sharp(cover).resize(W, H, { fit: 'cover' }).blur(60).modulate({ brightness: 0.55 }).toBuffer();
+  const fg = await sharp(cover).resize(side, side, { fit: 'cover' }).toBuffer();
+  await sharp(bg).composite([{ input: fg, gravity: 'center' }]).png().toFile(out);
+}
+
+// ---- Whole edit ----------------------------------------------------------------------------------------------
+
+export interface RenderInputs {
+  project: MaterialProject;
+  brand: BrandKit;
+  dir: string;
+  trackFile: string | null;
+  scenes: Map<string, ParallaxScene>;
+  /** Local files for scene layer URLs and the cover. */
+  image: (url: string) => Promise<string>;
+  coverUrl: string | null;
+  clipFile: (shot: Shot) => string | null;
+  onStep: (step: string) => void;
+  signal?: AbortSignal;
+}
+
+export async function renderProject(inp: RenderInputs): Promise<{ files: RenderFile[]; warnings: string[] }> {
+  const { project, brand, dir } = inp;
+  const formats: VideoFormat[] = [project.request.format];
+  if (project.request.alsoOther) formats.push(project.request.format === '16:9' ? '9:16' : '16:9');
+  const tmp = path.join(dir, 'tmp');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  fs.mkdirSync(tmp, { recursive: true });
+  const warnings: string[] = [];
+  const files: RenderFile[] = [];
+  const total = project.shots.reduce((a, s) => a + s.seconds, 0);
+
+  for (const format of formats) {
+    const tag = format.replace(':', 'x');
+    const segs: string[] = [];
+    for (const [i, shot] of project.shots.entries()) {
+      inp.onStep(`${format}: ujęcie ${i + 1} z ${project.shots.length}`);
+      const out = path.join(tmp, `seg-${tag}-${String(i).padStart(2, '0')}.mp4`);
+      const card = async (title: string, sub: string, muted = false) => {
+        const png = path.join(tmp, `card-${tag}-${i}.png`);
+        fs.writeFileSync(png, drawCard(format, brand, title, sub, muted));
+        await stillSegment(png, out, shot.seconds, format, inp.signal);
+      };
+      if (shot.visual === 'flow') {
+        const clip = inp.clipFile(shot);
+        if (clip) await clipSegment(clip, out, shot.seconds, format, inp.signal);
+        else {
+          warnings.push(`Ujęcie ${i + 1}: brak klipu z Flow — w podglądzie jest szara plansza.`);
+          await card(`Ujęcie ${i + 1}`, 'brak klipu z Flow', true);
+        }
+      } else if (shot.visual === 'parallax') {
+        const scene = shot.sceneId ? inp.scenes.get(shot.sceneId) : undefined;
+        if (!scene || !scene.layers.length) {
+          warnings.push(`Ujęcie ${i + 1}: nie ma sceny Parallax — zamiast niej plansza.`);
+          await card(`Ujęcie ${i + 1}`, 'brak sceny', true);
+        } else {
+          const layers = [];
+          for (const l of [...scene.layers].sort((a, b) => a.depth - b.depth)) layers.push({ file: await inp.image(l.url), depth: l.depth });
+          await parallaxSegment(layers, scene.intensity, brand.colors.bg, out, shot.seconds, format, tmp, inp.signal);
+        }
+      } else if (shot.visual === 'okladka') {
+        if (!inp.coverUrl) {
+          warnings.push(`Ujęcie ${i + 1}: premiera nie ma okładki — zamiast niej plansza.`);
+          await card(shot.cardText || 'MuzaIK', '', false);
+        } else {
+          const png = path.join(tmp, `cover-${tag}.png`);
+          if (!fs.existsSync(png)) await coverStill(await inp.image(inp.coverUrl), format, png);
+          await stillSegment(png, out, shot.seconds, format, inp.signal);
+        }
+      } else {
+        const [title, ...rest] = (shot.cardText || 'MuzaIK').split('\n');
+        await card(title, rest.join(' '));
+      }
+      segs.push(out);
+    }
+
+    inp.onStep(`${format}: łączę ujęcia`);
+    const list = path.join(tmp, `list-${tag}.txt`);
+    fs.writeFileSync(list, segs.map((s) => `file '${s.replace(/'/g, "'\\''")}'`).join('\n'));
+    const video = path.join(tmp, `video-${tag}.mp4`);
+    await run('ffmpeg', ['-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', video], inp.signal);
+
+    const name = `${slug(project.copy.title || project.request.kind)}-${tag}.mp4`;
+    const final = path.join(dir, name);
+    if (inp.trackFile && project.cut) {
+      inp.onStep(`${format}: muzyka (−14 LUFS)`);
+      const fadeOut = Math.max(0, total - 1.5).toFixed(2);
+      await run('ffmpeg', ['-y', '-v', 'error', '-i', video, '-ss', String(project.cut.start), '-t', total.toFixed(3), '-i', inp.trackFile,
+        '-filter_complex', `[1:a]aresample=48000,afade=t=in:st=0:d=0.05,afade=t=out:st=${fadeOut}:d=1.5,loudnorm=I=-14:TP=-1.5:LRA=11,apad[a]`,
+        '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-t', total.toFixed(3), '-movflags', '+faststart', final], inp.signal);
+    } else {
+      if (!warnings.some((w) => w.startsWith('Bez muzyki'))) warnings.push('Bez muzyki — film nie ma przypisanego utworu.');
+      fs.copyFileSync(video, final);
+    }
+    const info = await probeDuration(final);
+    files.push({ format, name, seconds: info ? Math.round(info.seconds * 10) / 10 : total, bytes: fs.statSync(final).size });
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+  return { files, warnings };
+}
+
+export function slug(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'material';
+}

@@ -1,0 +1,1443 @@
+{
+ "id": "starter",
+ "name": "Zestaw startowy (z Kuźni inspiracji)",
+ "context": "Ogólny generator obrazów: styl, nurt w sztuce, medium, inspiracja mistrzem, światło, nastrój, paleta, kadr i gatunek muzyczny.",
+ "motif": "a lighthouse on a rocky coast by the sea",
+ "source": "starter",
+ "createdAt": "2026-10-20T00:00:00.000Z",
+ "groups": [
+  {
+   "id": "style",
+   "label": "Styl obrazu",
+   "description": "Ogólny wygląd: zdjęcie, ilustracja, 3D, komiks…",
+   "promptLabel": "Style",
+   "kind": "sample",
+   "tone": "#a78bfa",
+   "icon": "Palette",
+   "options": [
+    {
+     "code": "realistic",
+     "label": "Realistyczny",
+     "description": "Jak prawdziwe zdjęcie, wierne detale.",
+     "prompt": "realistic, true-to-life detail",
+     "colors": null,
+     "sample": "/options/starter/style/realistic.webp"
+    },
+    {
+     "code": "cinematic",
+     "label": "Kinowy",
+     "description": "Kadr z filmu: głębia ostrości, dramatyzm.",
+     "prompt": "cinematic film still with dramatic depth of field",
+     "colors": null,
+     "sample": "/options/starter/style/cinematic.webp"
+    },
+    {
+     "code": "render_3d",
+     "label": "Render 3D",
+     "description": "Gładkie bryły i materiały jak z animacji.",
+     "prompt": "polished 3D render with tactile materials",
+     "colors": null,
+     "sample": "/options/starter/style/render_3d.webp"
+    },
+    {
+     "code": "digital_art",
+     "label": "Malarstwo cyfrowe",
+     "description": "Żywe kolory malowane na tablecie.",
+     "prompt": "vivid digital painting",
+     "colors": null,
+     "sample": "/options/starter/style/digital_art.webp"
+    },
+    {
+     "code": "illustration",
+     "label": "Ilustracja",
+     "description": "Staranna ilustracja jak w magazynie.",
+     "prompt": "refined editorial illustration",
+     "colors": null,
+     "sample": "/options/starter/style/illustration.webp"
+    },
+    {
+     "code": "storybook",
+     "label": "Bajkowa ilustracja",
+     "description": "Ciepła ilustracja z książki dla dzieci.",
+     "prompt": "whimsical storybook illustration",
+     "colors": null,
+     "sample": "/options/starter/style/storybook.webp"
+    },
+    {
+     "code": "cartoon",
+     "label": "Kreskówka",
+     "description": "Mocny kontur, proste kształty.",
+     "prompt": "bold cartoon with clean outlines",
+     "colors": null,
+     "sample": "/options/starter/style/cartoon.webp"
+    },
+    {
+     "code": "anime",
+     "label": "Anime",
+     "description": "Japońska animacja: czyste linie, duże oczy.",
+     "prompt": "anime-inspired illustration",
+     "colors": null,
+     "sample": "/options/starter/style/anime.webp"
+    },
+    {
+     "code": "comic_book",
+     "label": "Komiks",
+     "description": "Tusz, raster i dynamiczny kadr.",
+     "prompt": "comic-book art with ink outlines and halftone shading",
+     "colors": null,
+     "sample": "/options/starter/style/comic_book.webp"
+    },
+    {
+     "code": "pop_art",
+     "label": "Pop-art",
+     "description": "Płaskie, mocne kolory i kropki rastra.",
+     "prompt": "pop art with flat bold colours and halftone dots",
+     "colors": null,
+     "sample": "/options/starter/style/pop_art.webp"
+    },
+    {
+     "code": "vaporwave",
+     "label": "Vaporwave",
+     "description": "Róż i turkus, retro lata 80–90.",
+     "prompt": "vaporwave aesthetic in pink and teal",
+     "colors": null,
+     "sample": "/options/starter/style/vaporwave.webp"
+    },
+    {
+     "code": "synthwave",
+     "label": "Synthwave",
+     "description": "Neonowa siatka i zachód słońca z lat 80.",
+     "prompt": "synthwave retro-futurism with a neon grid and sunset glow",
+     "colors": null,
+     "sample": "/options/starter/style/synthwave.webp"
+    },
+    {
+     "code": "cyberpunk",
+     "label": "Cyberpunk",
+     "description": "Neony, deszcz, miasto przyszłości.",
+     "prompt": "cyberpunk atmosphere with neon and rain",
+     "colors": null,
+     "sample": "/options/starter/style/cyberpunk.webp"
+    },
+    {
+     "code": "steampunk",
+     "label": "Steampunk",
+     "description": "Mosiądz, zębatki, wiktoriańskie maszyny.",
+     "prompt": "steampunk with brass gears and Victorian machinery",
+     "colors": null,
+     "sample": "/options/starter/style/steampunk.webp"
+    },
+    {
+     "code": "fantasy_art",
+     "label": "Fantasy",
+     "description": "Epicki, baśniowy świat.",
+     "prompt": "epic fantasy art",
+     "colors": null,
+     "sample": "/options/starter/style/fantasy_art.webp"
+    },
+    {
+     "code": "low_poly",
+     "label": "Low poly",
+     "description": "Bryły z prostych trójkątów.",
+     "prompt": "low-poly geometric 3D",
+     "colors": null,
+     "sample": "/options/starter/style/low_poly.webp"
+    },
+    {
+     "code": "isometric",
+     "label": "Izometryczny",
+     "description": "Miniatura widziana pod kątem z góry.",
+     "prompt": "isometric miniature diorama",
+     "colors": null,
+     "sample": "/options/starter/style/isometric.webp"
+    },
+    {
+     "code": "pixel_art",
+     "label": "Pixel art",
+     "description": "Grafika z widocznych pikseli, jak w starych grach.",
+     "prompt": "pixel art with crisp 16-bit pixels",
+     "colors": null,
+     "sample": "/options/starter/style/pixel_art.webp"
+    },
+    {
+     "code": "vector_flat",
+     "label": "Wektor płaski",
+     "description": "Czyste, płaskie kształty bez cieni.",
+     "prompt": "flat vector illustration with clean shapes",
+     "colors": null,
+     "sample": "/options/starter/style/vector_flat.webp"
+    },
+    {
+     "code": "line_art",
+     "label": "Rysunek liniowy",
+     "description": "Sam kontur, jedna barwa.",
+     "prompt": "elegant single-colour line art",
+     "colors": null,
+     "sample": "/options/starter/style/line_art.webp"
+    },
+    {
+     "code": "papercut",
+     "label": "Wycinanka warstwowa",
+     "description": "Warstwy papieru z miękkim cieniem.",
+     "prompt": "layered paper-cut art with soft shadows",
+     "colors": null,
+     "sample": "/options/starter/style/papercut.webp"
+    },
+    {
+     "code": "origami",
+     "label": "Origami",
+     "description": "Rzeźba ze składanego papieru.",
+     "prompt": "origami folded-paper sculpture",
+     "colors": null,
+     "sample": "/options/starter/style/origami.webp"
+    },
+    {
+     "code": "stained_glass",
+     "label": "Witraż",
+     "description": "Świecące szkło w ołowianych liniach.",
+     "prompt": "luminous stained-glass window",
+     "colors": null,
+     "sample": "/options/starter/style/stained_glass.webp"
+    },
+    {
+     "code": "mosaic",
+     "label": "Mozaika",
+     "description": "Obraz z drobnych kolorowych płytek.",
+     "prompt": "mosaic of small coloured tiles",
+     "colors": null,
+     "sample": "/options/starter/style/mosaic.webp"
+    },
+    {
+     "code": "minimalism",
+     "label": "Minimalizm",
+     "description": "Mało elementów, dużo spokoju.",
+     "prompt": "minimalist design with few elements",
+     "colors": null,
+     "sample": "/options/starter/style/minimalism.webp"
+    },
+    {
+     "code": "analog_film",
+     "label": "Film analogowy",
+     "description": "Ziarno i miękkie kolory starej kliszy.",
+     "prompt": "analog film photograph with grain and soft colour",
+     "colors": null,
+     "sample": "/options/starter/style/analog_film.webp"
+    }
+   ]
+  },
+  {
+   "id": "movement",
+   "label": "Styl sztuki",
+   "description": "Kierunek z historii sztuki.",
+   "promptLabel": "Art movement",
+   "kind": "sample",
+   "tone": "#fbbf24",
+   "icon": "Landmark",
+   "options": [
+    {
+     "code": "renaissance",
+     "label": "Renesans",
+     "description": "Harmonia, perspektywa, łagodne światło (XV–XVI w.).",
+     "prompt": "Renaissance painting",
+     "colors": null,
+     "sample": "/options/starter/movement/renaissance.webp"
+    },
+    {
+     "code": "baroque",
+     "label": "Barok",
+     "description": "Dramat, ruch i głęboki światłocień (XVII w.).",
+     "prompt": "Baroque painting with rich chiaroscuro",
+     "colors": null,
+     "sample": "/options/starter/movement/baroque.webp"
+    },
+    {
+     "code": "romanticism",
+     "label": "Romantyzm",
+     "description": "Uczucia i potęga natury.",
+     "prompt": "Romanticism, sweeping emotion and sublime nature",
+     "colors": null,
+     "sample": "/options/starter/movement/romanticism.webp"
+    },
+    {
+     "code": "impressionism",
+     "label": "Impresjonizm",
+     "description": "Luźne, widoczne pociągnięcia pędzla, światło i ulotna chwila.",
+     "prompt": "Impressionism, loose visible brushstrokes and light",
+     "colors": null,
+     "sample": "/options/starter/movement/impressionism.webp"
+    },
+    {
+     "code": "post_impressionism",
+     "label": "Postimpresjonizm",
+     "description": "Mocny kolor i ekspresyjny pędzel (jak Van Gogh).",
+     "prompt": "Post-Impressionism, bold colour and expressive brushwork",
+     "colors": null,
+     "sample": "/options/starter/movement/post_impressionism.webp"
+    },
+    {
+     "code": "pointillism",
+     "label": "Puentylizm",
+     "description": "Obraz złożony z drobnych kropek koloru.",
+     "prompt": "pointillism, built from tiny dots of colour",
+     "colors": null,
+     "sample": "/options/starter/movement/pointillism.webp"
+    },
+    {
+     "code": "expressionism",
+     "label": "Ekspresjonizm",
+     "description": "Intensywne kolory, zniekształcone formy, emocje.",
+     "prompt": "Expressionism, intense colour and distorted forms",
+     "colors": null,
+     "sample": "/options/starter/movement/expressionism.webp"
+    },
+    {
+     "code": "art_nouveau",
+     "label": "Secesja",
+     "description": "Płynne, roślinne linie i ornament.",
+     "prompt": "Art Nouveau, flowing organic lines and ornament",
+     "colors": null,
+     "sample": "/options/starter/movement/art_nouveau.webp"
+    },
+    {
+     "code": "art_deco",
+     "label": "Art deco",
+     "description": "Geometryczna elegancja i złote akcenty.",
+     "prompt": "Art Deco, geometric elegance and gold accents",
+     "colors": null,
+     "sample": "/options/starter/movement/art_deco.webp"
+    },
+    {
+     "code": "cubism",
+     "label": "Kubizm",
+     "description": "Rozbite, geometryczne płaszczyzny.",
+     "prompt": "Cubism, fragmented geometric planes",
+     "colors": null,
+     "sample": "/options/starter/movement/cubism.webp"
+    },
+    {
+     "code": "futurism",
+     "label": "Futuryzm",
+     "description": "Linie ruchu i prędkość.",
+     "prompt": "Futurism, dynamic lines of motion",
+     "colors": null,
+     "sample": "/options/starter/movement/futurism.webp"
+    },
+    {
+     "code": "fauvism",
+     "label": "Fowizm",
+     "description": "Dzikie, nienaturalne kolory.",
+     "prompt": "Fauvism, wild non-natural colour",
+     "colors": null,
+     "sample": "/options/starter/movement/fauvism.webp"
+    },
+    {
+     "code": "surrealism",
+     "label": "Surrealizm",
+     "description": "Sen na jawie, niemożliwe sceny.",
+     "prompt": "Surrealism, a dreamlike impossible scene",
+     "colors": null,
+     "sample": "/options/starter/movement/surrealism.webp"
+    },
+    {
+     "code": "bauhaus",
+     "label": "Bauhaus",
+     "description": "Kolory podstawowe i prosta geometria.",
+     "prompt": "Bauhaus, primary colours and simple geometry",
+     "colors": null,
+     "sample": "/options/starter/movement/bauhaus.webp"
+    },
+    {
+     "code": "constructivism",
+     "label": "Konstruktywizm",
+     "description": "Śmiałe przekątne i graficzne kształty.",
+     "prompt": "Constructivism, bold diagonals and graphic shapes",
+     "colors": null,
+     "sample": "/options/starter/movement/constructivism.webp"
+    },
+    {
+     "code": "abstract",
+     "label": "Abstrakcja",
+     "description": "Rytm kształtów i koloru zamiast przedmiotów.",
+     "prompt": "abstract art, rhythm of shapes and colour",
+     "colors": null,
+     "sample": "/options/starter/movement/abstract.webp"
+    },
+    {
+     "code": "ukiyo_e",
+     "label": "Ukiyo-e",
+     "description": "Japoński drzeworyt: płaskie barwy, kontur.",
+     "prompt": "ukiyo-e Japanese woodblock print",
+     "colors": null,
+     "sample": "/options/starter/movement/ukiyo_e.webp"
+    },
+    {
+     "code": "folk_art",
+     "label": "Sztuka ludowa",
+     "description": "Polska wycinanka i ludowy ornament.",
+     "prompt": "Polish folk paper-cut (wycinanka) ornament",
+     "colors": null,
+     "sample": "/options/starter/movement/folk_art.webp"
+    },
+    {
+     "code": "naive_art",
+     "label": "Sztuka naiwna",
+     "description": "Prosta, dziecięca szczerość.",
+     "prompt": "naive art with childlike charm",
+     "colors": null,
+     "sample": "/options/starter/movement/naive_art.webp"
+    }
+   ]
+  },
+  {
+   "id": "medium",
+   "label": "Medium",
+   "description": "Czym obraz jest „namalowany”.",
+   "promptLabel": "Medium",
+   "kind": "sample",
+   "tone": "#fb7185",
+   "icon": "Brush",
+   "options": [
+    {
+     "code": "watercolour",
+     "label": "Akwarela",
+     "description": "Przejrzyste plamy farby rozlewające się na papierze.",
+     "prompt": "watercolour with soft pigment blooms on paper",
+     "colors": null,
+     "sample": "/options/starter/medium/watercolour.webp"
+    },
+    {
+     "code": "gouache",
+     "label": "Gwasz",
+     "description": "Matowe, kryjące kolory.",
+     "prompt": "matte gouache painting",
+     "colors": null,
+     "sample": "/options/starter/medium/gouache.webp"
+    },
+    {
+     "code": "oil",
+     "label": "Olej",
+     "description": "Gęsta farba z widocznym impastem.",
+     "prompt": "rich oil painting with visible impasto",
+     "colors": null,
+     "sample": "/options/starter/medium/oil.webp"
+    },
+    {
+     "code": "acrylic",
+     "label": "Akryl",
+     "description": "Jasne, nasycone kolory.",
+     "prompt": "bright acrylic painting",
+     "colors": null,
+     "sample": "/options/starter/medium/acrylic.webp"
+    },
+    {
+     "code": "charcoal",
+     "label": "Węgiel",
+     "description": "Ekspresyjny rysunek węglem na szorstkim papierze.",
+     "prompt": "expressive charcoal drawing on textured paper",
+     "colors": null,
+     "sample": "/options/starter/medium/charcoal.webp"
+    },
+    {
+     "code": "graphite",
+     "label": "Ołówek",
+     "description": "Precyzyjny rysunek grafitem.",
+     "prompt": "detailed graphite pencil drawing",
+     "colors": null,
+     "sample": "/options/starter/medium/graphite.webp"
+    },
+    {
+     "code": "coloured_pencil",
+     "label": "Kredki",
+     "description": "Miękkie warstwy kredek.",
+     "prompt": "coloured pencil drawing",
+     "colors": null,
+     "sample": "/options/starter/medium/coloured_pencil.webp"
+    },
+    {
+     "code": "ink",
+     "label": "Tusz i piórko",
+     "description": "Czarne, cienkie linie piórka.",
+     "prompt": "black ink drawing with fine pen lines",
+     "colors": null,
+     "sample": "/options/starter/medium/ink.webp"
+    },
+    {
+     "code": "ink_wash",
+     "label": "Tusz lawowany",
+     "description": "Wschodnie malarstwo tuszem i wodą.",
+     "prompt": "East Asian ink wash painting",
+     "colors": null,
+     "sample": "/options/starter/medium/ink_wash.webp"
+    },
+    {
+     "code": "pastel",
+     "label": "Pastel suchy",
+     "description": "Pudrowe, miękkie kolory.",
+     "prompt": "soft pastel drawing",
+     "colors": null,
+     "sample": "/options/starter/medium/pastel.webp"
+    },
+    {
+     "code": "oil_pastel",
+     "label": "Pastel olejny",
+     "description": "Tłuste, żywe pociągnięcia.",
+     "prompt": "vibrant oil pastel",
+     "colors": null,
+     "sample": "/options/starter/medium/oil_pastel.webp"
+    },
+    {
+     "code": "chalk",
+     "label": "Kreda",
+     "description": "Rysunek kredą na ciemnej tablicy.",
+     "prompt": "chalk drawing on a dark board",
+     "colors": null,
+     "sample": "/options/starter/medium/chalk.webp"
+    },
+    {
+     "code": "spray_paint",
+     "label": "Spray (mural)",
+     "description": "Uliczny mural malowany sprayem.",
+     "prompt": "spray-paint street mural",
+     "colors": null,
+     "sample": "/options/starter/medium/spray_paint.webp"
+    },
+    {
+     "code": "linocut",
+     "label": "Linoryt",
+     "description": "Odbitka z wyciętego linoleum.",
+     "prompt": "linocut print",
+     "colors": null,
+     "sample": "/options/starter/medium/linocut.webp"
+    },
+    {
+     "code": "woodcut",
+     "label": "Drzeworyt",
+     "description": "Odbitka z drewna, wyraźne słoje i krawędzie.",
+     "prompt": "woodcut print",
+     "colors": null,
+     "sample": "/options/starter/medium/woodcut.webp"
+    },
+    {
+     "code": "etching",
+     "label": "Akwaforta",
+     "description": "Delikatna grafika trawiona w metalu.",
+     "prompt": "fine etching",
+     "colors": null,
+     "sample": "/options/starter/medium/etching.webp"
+    },
+    {
+     "code": "screen_print",
+     "label": "Sitodruk",
+     "description": "Płaskie, nakładane warstwy farby.",
+     "prompt": "screen print in flat layered inks",
+     "colors": null,
+     "sample": "/options/starter/medium/screen_print.webp"
+    },
+    {
+     "code": "collage",
+     "label": "Kolaż",
+     "description": "Wycinki papieru i materiałów.",
+     "prompt": "mixed-media paper collage",
+     "colors": null,
+     "sample": "/options/starter/medium/collage.webp"
+    },
+    {
+     "code": "embroidery",
+     "label": "Haft",
+     "description": "Obraz wyszyty kolorową nicią.",
+     "prompt": "embroidery in coloured thread",
+     "colors": null,
+     "sample": "/options/starter/medium/embroidery.webp"
+    }
+   ]
+  },
+  {
+   "id": "master",
+   "label": "Inspiracja mistrzem",
+   "description": "Pędzel i kolor dawnego mistrza (domena publiczna).",
+   "promptLabel": null,
+   "kind": "sample",
+   "tone": "#fb923c",
+   "icon": "Crown",
+   "options": [
+    {
+     "code": "leonardo",
+     "label": "Leonardo da Vinci",
+     "description": "Renesans: miękkie przejścia (sfumato), harmonia.",
+     "prompt": "In the manner of Leonardo da Vinci (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/leonardo.webp"
+    },
+    {
+     "code": "botticelli",
+     "label": "Sandro Botticelli",
+     "description": "Renesans: lekkość, wdzięk, delikatne kolory.",
+     "prompt": "In the manner of Sandro Botticelli (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/botticelli.webp"
+    },
+    {
+     "code": "bosch",
+     "label": "Hieronim Bosch",
+     "description": "Fantastyczne, roiące się sceny.",
+     "prompt": "In the manner of Hieronymus Bosch (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/bosch.webp"
+    },
+    {
+     "code": "bruegel",
+     "label": "Pieter Bruegel Starszy",
+     "description": "Gwarne sceny ludowe i pejzaże.",
+     "prompt": "In the manner of Pieter Bruegel the Elder (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/bruegel.webp"
+    },
+    {
+     "code": "rembrandt",
+     "label": "Rembrandt",
+     "description": "Złote światło wydobyte z mroku.",
+     "prompt": "In the manner of Rembrandt van Rijn (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/rembrandt.webp"
+    },
+    {
+     "code": "vermeer",
+     "label": "Johannes Vermeer",
+     "description": "Ciche wnętrza w świetle z okna.",
+     "prompt": "In the manner of Johannes Vermeer (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/vermeer.webp"
+    },
+    {
+     "code": "turner",
+     "label": "William Turner",
+     "description": "Burze światła, mgły i morze.",
+     "prompt": "In the manner of J. M. W. Turner (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/turner.webp"
+    },
+    {
+     "code": "hokusai",
+     "label": "Katsushika Hokusai",
+     "description": "Japoński drzeworyt, fale i góry.",
+     "prompt": "In the manner of Katsushika Hokusai (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/hokusai.webp"
+    },
+    {
+     "code": "hiroshige",
+     "label": "Utagawa Hiroshige",
+     "description": "Poetyckie pejzaże drzeworytu.",
+     "prompt": "In the manner of Utagawa Hiroshige (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/hiroshige.webp"
+    },
+    {
+     "code": "monet",
+     "label": "Claude Monet",
+     "description": "Impresjonizm: światło na wodzie, lilie.",
+     "prompt": "In the manner of Claude Monet (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/monet.webp"
+    },
+    {
+     "code": "degas",
+     "label": "Edgar Degas",
+     "description": "Tancerki, scena, pastel.",
+     "prompt": "In the manner of Edgar Degas (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/degas.webp"
+    },
+    {
+     "code": "renoir",
+     "label": "Pierre-Auguste Renoir",
+     "description": "Ciepłe, radosne światło i postacie.",
+     "prompt": "In the manner of Pierre-Auguste Renoir (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/renoir.webp"
+    },
+    {
+     "code": "van_gogh",
+     "label": "Vincent van Gogh",
+     "description": "Wirujące pociągnięcia i intensywne kolory.",
+     "prompt": "In the manner of Vincent van Gogh (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/van_gogh.webp"
+    },
+    {
+     "code": "seurat",
+     "label": "Georges Seurat",
+     "description": "Puentylizm: obraz z kropek.",
+     "prompt": "In the manner of Georges Seurat (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/seurat.webp"
+    },
+    {
+     "code": "toulouse_lautrec",
+     "label": "Henri de Toulouse-Lautrec",
+     "description": "Kabaret, plakat, płaskie barwy.",
+     "prompt": "In the manner of Henri de Toulouse-Lautrec (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/toulouse_lautrec.webp"
+    },
+    {
+     "code": "klimt",
+     "label": "Gustav Klimt",
+     "description": "Złoto, ornament, secesja.",
+     "prompt": "In the manner of Gustav Klimt (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/klimt.webp"
+    },
+    {
+     "code": "mucha",
+     "label": "Alfons Mucha",
+     "description": "Secesyjne linie i kwiatowe ramy.",
+     "prompt": "In the manner of Alphonse Mucha (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/mucha.webp"
+    },
+    {
+     "code": "schiele",
+     "label": "Egon Schiele",
+     "description": "Nerwowa, ekspresyjna kreska.",
+     "prompt": "In the manner of Egon Schiele (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/schiele.webp"
+    },
+    {
+     "code": "munch",
+     "label": "Edvard Munch",
+     "description": "Ekspresjonizm, falujące niebo, emocje.",
+     "prompt": "In the manner of Edvard Munch (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/munch.webp"
+    },
+    {
+     "code": "kandinsky",
+     "label": "Wassily Kandinsky",
+     "description": "Abstrakcja jak muzyka: koła, linie, kolor.",
+     "prompt": "In the manner of Wassily Kandinsky (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/kandinsky.webp"
+    },
+    {
+     "code": "klee",
+     "label": "Paul Klee",
+     "description": "Lekka, poetycka geometria.",
+     "prompt": "In the manner of Paul Klee (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/klee.webp"
+    },
+    {
+     "code": "mondrian",
+     "label": "Piet Mondrian",
+     "description": "Czarne linie i prostokąty barw podstawowych.",
+     "prompt": "In the manner of Piet Mondrian (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/mondrian.webp"
+    },
+    {
+     "code": "matisse",
+     "label": "Henri Matisse",
+     "description": "Wycinanki i radosny kolor.",
+     "prompt": "In the manner of Henri Matisse (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/matisse.webp"
+    },
+    {
+     "code": "leger",
+     "label": "Fernand Léger",
+     "description": "Grube kontury, mechaniczne formy.",
+     "prompt": "In the manner of Fernand Léger (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/leger.webp"
+    },
+    {
+     "code": "wyspianski",
+     "label": "Stanisław Wyspiański",
+     "description": "Polska secesja, pastel, kwiaty.",
+     "prompt": "In the manner of Stanisław Wyspiański (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/wyspianski.webp"
+    },
+    {
+     "code": "mehoffer",
+     "label": "Józef Mehoffer",
+     "description": "Witraże i dekoracyjna secesja.",
+     "prompt": "In the manner of Józef Mehoffer (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/mehoffer.webp"
+    },
+    {
+     "code": "malczewski",
+     "label": "Jacek Malczewski",
+     "description": "Symbolizm, polski pejzaż, alegoria.",
+     "prompt": "In the manner of Jacek Malczewski (brushwork, colour and composition only; an original artwork, never a copy of an existing work)",
+     "colors": null,
+     "sample": "/options/starter/master/malczewski.webp"
+    }
+   ]
+  },
+  {
+   "id": "lighting",
+   "label": "Oświetlenie",
+   "description": "Skąd i jakie pada światło.",
+   "promptLabel": "Lighting",
+   "kind": "sample",
+   "tone": "#38bdf8",
+   "icon": "Sun",
+   "options": [
+    {
+     "code": "golden_hour",
+     "label": "Złota godzina",
+     "description": "Ciepłe, niskie słońce tuż przed zachodem.",
+     "prompt": "warm golden-hour light",
+     "colors": null,
+     "sample": "/options/starter/lighting/golden_hour.webp"
+    },
+    {
+     "code": "blue_hour",
+     "label": "Niebieska godzina",
+     "description": "Chłodny zmierzch po zachodzie słońca.",
+     "prompt": "cool blue-hour twilight",
+     "colors": null,
+     "sample": "/options/starter/lighting/blue_hour.webp"
+    },
+    {
+     "code": "moonlight",
+     "label": "Księżyc",
+     "description": "Srebrne, nocne światło.",
+     "prompt": "silver moonlight",
+     "colors": null,
+     "sample": "/options/starter/lighting/moonlight.webp"
+    },
+    {
+     "code": "candlelight",
+     "label": "Świece",
+     "description": "Ciepłe, migoczące światło świec.",
+     "prompt": "warm flickering candlelight",
+     "colors": null,
+     "sample": "/options/starter/lighting/candlelight.webp"
+    },
+    {
+     "code": "stage_spotlight",
+     "label": "Reflektor sceniczny",
+     "description": "Jeden snop światła w ciemności.",
+     "prompt": "a single stage spotlight in the dark",
+     "colors": null,
+     "sample": "/options/starter/lighting/stage_spotlight.webp"
+    },
+    {
+     "code": "concert_lights",
+     "label": "Światła koncertowe",
+     "description": "Kolorowe smugi świateł sceny.",
+     "prompt": "colourful concert lights with beams",
+     "colors": null,
+     "sample": "/options/starter/lighting/concert_lights.webp"
+    },
+    {
+     "code": "neon",
+     "label": "Neon",
+     "description": "Świecące, kolorowe neony.",
+     "prompt": "glowing neon light",
+     "colors": null,
+     "sample": "/options/starter/lighting/neon.webp"
+    },
+    {
+     "code": "backlight",
+     "label": "Kontra",
+     "description": "Światło zza tematu, świecący kontur.",
+     "prompt": "strong backlight with a glowing rim",
+     "colors": null,
+     "sample": "/options/starter/lighting/backlight.webp"
+    },
+    {
+     "code": "chiaroscuro",
+     "label": "Światłocień",
+     "description": "Mocny kontrast jasności i mroku.",
+     "prompt": "dramatic chiaroscuro",
+     "colors": null,
+     "sample": "/options/starter/lighting/chiaroscuro.webp"
+    },
+    {
+     "code": "soft_daylight",
+     "label": "Miękkie światło dzienne",
+     "description": "Rozproszone, naturalne światło.",
+     "prompt": "soft natural daylight",
+     "colors": null,
+     "sample": "/options/starter/lighting/soft_daylight.webp"
+    },
+    {
+     "code": "studio",
+     "label": "Studyjne",
+     "description": "Czyste, równe światło jak w studiu.",
+     "prompt": "clean soft studio lighting",
+     "colors": null,
+     "sample": "/options/starter/lighting/studio.webp"
+    },
+    {
+     "code": "foggy",
+     "label": "Mgła",
+     "description": "Światło rozproszone we mgle.",
+     "prompt": "hazy light through fog",
+     "colors": null,
+     "sample": "/options/starter/lighting/foggy.webp"
+    },
+    {
+     "code": "warm",
+     "label": "Ciepłe",
+     "description": "Ogólnie ciepła, przytulna tonacja.",
+     "prompt": "warm ambient light",
+     "colors": null,
+     "sample": "/options/starter/lighting/warm.webp"
+    },
+    {
+     "code": "cool",
+     "label": "Chłodne",
+     "description": "Ogólnie chłodna, spokojna tonacja.",
+     "prompt": "cool ambient light",
+     "colors": null,
+     "sample": "/options/starter/lighting/cool.webp"
+    },
+    {
+     "code": "iridescent",
+     "label": "Opalizujące",
+     "description": "Mieniące się, tęczowe odblaski.",
+     "prompt": "iridescent shimmering light",
+     "colors": null,
+     "sample": "/options/starter/lighting/iridescent.webp"
+    }
+   ]
+  },
+  {
+   "id": "mood",
+   "label": "Nastrój",
+   "description": "Jakie uczucie ma budzić obraz.",
+   "promptLabel": "Mood",
+   "kind": "sample",
+   "tone": "#f472b6",
+   "icon": "Smile",
+   "options": [
+    {
+     "code": "calm",
+     "label": "Spokojny",
+     "description": "Cisza i ukojenie.",
+     "prompt": "calm and serene",
+     "colors": null,
+     "sample": "/options/starter/mood/calm.webp"
+    },
+    {
+     "code": "joyful",
+     "label": "Radosny",
+     "description": "Lekkość i dobra energia.",
+     "prompt": "joyful and uplifting",
+     "colors": null,
+     "sample": "/options/starter/mood/joyful.webp"
+    },
+    {
+     "code": "energetic",
+     "label": "Energiczny",
+     "description": "Ruch, siła, dynamika.",
+     "prompt": "energetic and dynamic",
+     "colors": null,
+     "sample": "/options/starter/mood/energetic.webp"
+    },
+    {
+     "code": "melancholic",
+     "label": "Melancholijny",
+     "description": "Zaduma i tęsknota.",
+     "prompt": "melancholic and wistful",
+     "colors": null,
+     "sample": "/options/starter/mood/melancholic.webp"
+    },
+    {
+     "code": "romantic",
+     "label": "Romantyczny",
+     "description": "Czułość i ciepło.",
+     "prompt": "romantic and tender",
+     "colors": null,
+     "sample": "/options/starter/mood/romantic.webp"
+    },
+    {
+     "code": "mysterious",
+     "label": "Tajemniczy",
+     "description": "Niedopowiedzenie i zagadka.",
+     "prompt": "mysterious",
+     "colors": null,
+     "sample": "/options/starter/mood/mysterious.webp"
+    },
+    {
+     "code": "dreamy",
+     "label": "Marzycielski",
+     "description": "Lekki jak sen, eteryczny.",
+     "prompt": "dreamy and ethereal",
+     "colors": null,
+     "sample": "/options/starter/mood/dreamy.webp"
+    },
+    {
+     "code": "nostalgic",
+     "label": "Nostalgiczny",
+     "description": "Wspomnienie dawnych czasów.",
+     "prompt": "nostalgic",
+     "colors": null,
+     "sample": "/options/starter/mood/nostalgic.webp"
+    },
+    {
+     "code": "festive",
+     "label": "Świąteczny",
+     "description": "Święto i celebracja.",
+     "prompt": "festive and celebratory",
+     "colors": null,
+     "sample": "/options/starter/mood/festive.webp"
+    },
+    {
+     "code": "epic",
+     "label": "Epicki",
+     "description": "Wielkość i rozmach.",
+     "prompt": "epic and grand",
+     "colors": null,
+     "sample": "/options/starter/mood/epic.webp"
+    },
+    {
+     "code": "playful",
+     "label": "Figlarny",
+     "description": "Zabawa i humor.",
+     "prompt": "playful and whimsical",
+     "colors": null,
+     "sample": "/options/starter/mood/playful.webp"
+    },
+    {
+     "code": "dark",
+     "label": "Mroczny",
+     "description": "Ciemny klimat, ale nie straszny.",
+     "prompt": "dark and moody, never frightening",
+     "colors": null,
+     "sample": "/options/starter/mood/dark.webp"
+    }
+   ]
+  },
+  {
+   "id": "palette",
+   "label": "Paleta",
+   "description": "Główne kolory obrazu.",
+   "promptLabel": "Colour palette",
+   "kind": "palette",
+   "tone": "#a3e635",
+   "icon": "SwatchBook",
+   "options": [
+    {
+     "code": "gold_navy",
+     "label": "Złoto i granat",
+     "description": "Elegancki, nocny kontrast.",
+     "prompt": "gold and deep navy",
+     "colors": [
+      "#D4AF37",
+      "#0B1F4B",
+      "#F2E3B3"
+     ],
+     "sample": null
+    },
+    {
+     "code": "black_gold",
+     "label": "Czerń i złoto",
+     "description": "Luksus i głębia.",
+     "prompt": "black and gold",
+     "colors": [
+      "#0A0A0A",
+      "#D4AF37",
+      "#3A3A3A"
+     ],
+     "sample": null
+    },
+    {
+     "code": "pastel",
+     "label": "Pastele",
+     "description": "Delikatne, jasne barwy.",
+     "prompt": "soft pastels",
+     "colors": [
+      "#F7C6D9",
+      "#BDE0FE",
+      "#CDEAC0"
+     ],
+     "sample": null
+    },
+    {
+     "code": "neon",
+     "label": "Neon",
+     "description": "Elektryczne, świecące kolory.",
+     "prompt": "electric neon colours",
+     "colors": [
+      "#FF2BD6",
+      "#00F0FF",
+      "#B6FF00"
+     ],
+     "sample": null
+    },
+    {
+     "code": "earth",
+     "label": "Ciepłe ziemiste",
+     "description": "Brązy, ochry, terakota.",
+     "prompt": "warm earth tones",
+     "colors": [
+      "#A0522D",
+      "#C8A165",
+      "#6B4F2C"
+     ],
+     "sample": null
+    },
+    {
+     "code": "cool_blues",
+     "label": "Chłodne błękity",
+     "description": "Granat, turkus, lód.",
+     "prompt": "cool blues and teals",
+     "colors": [
+      "#1E3A8A",
+      "#0EA5A4",
+      "#93C5FD"
+     ],
+     "sample": null
+    },
+    {
+     "code": "sunset",
+     "label": "Zachód słońca",
+     "description": "Pomarańcz, róż i fiolet.",
+     "prompt": "sunset oranges, pinks and purples",
+     "colors": [
+      "#FF7A3D",
+      "#FF5E8A",
+      "#7B3FA0"
+     ],
+     "sample": null
+    },
+    {
+     "code": "jewel",
+     "label": "Kamienie szlachetne",
+     "description": "Szmaragd, ametyst, rubin.",
+     "prompt": "rich jewel tones",
+     "colors": [
+      "#0F5132",
+      "#5B1A6E",
+      "#8B0F2E"
+     ],
+     "sample": null
+    },
+    {
+     "code": "monochrome",
+     "label": "Monochromatyczna",
+     "description": "Odcienie jednego koloru.",
+     "prompt": "monochrome, shades of one colour",
+     "colors": [
+      "#1F3A5F",
+      "#4A6FA5",
+      "#A9C1E0"
+     ],
+     "sample": null
+    },
+    {
+     "code": "black_white",
+     "label": "Czarno-biała",
+     "description": "Tylko czerń, biel i szarości.",
+     "prompt": "black and white",
+     "colors": [
+      "#000000",
+      "#7F7F7F",
+      "#FFFFFF"
+     ],
+     "sample": null
+    },
+    {
+     "code": "sepia",
+     "label": "Sepia",
+     "description": "Ciepły brąz starej fotografii.",
+     "prompt": "vintage sepia",
+     "colors": [
+      "#704214",
+      "#B08D57",
+      "#E8D5B0"
+     ],
+     "sample": null
+    },
+    {
+     "code": "primary",
+     "label": "Kolory podstawowe",
+     "description": "Czerwień, żółć i błękit.",
+     "prompt": "bold primary colours",
+     "colors": [
+      "#E10600",
+      "#FFD400",
+      "#0047AB"
+     ],
+     "sample": null
+    },
+    {
+     "code": "rainbow",
+     "label": "Tęczowa",
+     "description": "Całe spektrum barw.",
+     "prompt": "full rainbow spectrum",
+     "colors": [
+      "#FF3B30",
+      "#FFCC00",
+      "#34C759",
+      "#007AFF",
+      "#AF52DE"
+     ],
+     "sample": null
+    }
+   ]
+  },
+  {
+   "id": "composition",
+   "label": "Kadr i ujęcie",
+   "description": "Skąd patrzymy i jak ułożony jest obraz.",
+   "promptLabel": "Composition",
+   "kind": "diagram",
+   "tone": "#22d3ee",
+   "icon": "Frame",
+   "options": [
+    {
+     "code": "close_up",
+     "label": "Zbliżenie",
+     "description": "Temat wypełnia kadr.",
+     "prompt": "close-up on the main subject",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "centered",
+     "label": "Centralnie",
+     "description": "Temat dokładnie na środku.",
+     "prompt": "main subject centred",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "symmetrical",
+     "label": "Symetrycznie",
+     "description": "Lustrzany, spokojny układ.",
+     "prompt": "symmetrical composition",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "thirds",
+     "label": "Trójpodział",
+     "description": "Temat na linii jednej trzeciej.",
+     "prompt": "rule-of-thirds composition",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "panorama",
+     "label": "Panorama",
+     "description": "Szeroki widok na całą scenę.",
+     "prompt": "wide panoramic view",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "birds_eye",
+     "label": "Z lotu ptaka",
+     "description": "Widok wysoko z góry.",
+     "prompt": "bird's-eye view from above",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "low_angle",
+     "label": "Z dołu",
+     "description": "Patrzymy w górę, temat wydaje się wielki.",
+     "prompt": "low-angle view looking up",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "flat_lay",
+     "label": "Z góry (flat lay)",
+     "description": "Przedmioty ułożone płasko, widok prosto z góry.",
+     "prompt": "flat lay seen straight from above",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "negative_space",
+     "label": "Dużo wolnego miejsca",
+     "description": "Temat mały, wokół spokojna przestrzeń.",
+     "prompt": "generous empty space around the subject",
+     "colors": null,
+     "sample": null
+    },
+    {
+     "code": "pattern",
+     "label": "Wzór powtarzalny",
+     "description": "Motyw powtórzony jak tapeta.",
+     "prompt": "seamless repeating pattern",
+     "colors": null,
+     "sample": null
+    }
+   ]
+  },
+  {
+   "id": "genre",
+   "label": "Styl muzyczny",
+   "description": "Klimat i rekwizyty gatunku muzycznego.",
+   "promptLabel": "Music genre",
+   "kind": "sample",
+   "tone": "#34d399",
+   "icon": "Music",
+   "options": [
+    {
+     "code": "jazz",
+     "label": "Jazz",
+     "description": "Zadymiony klub, mosiądz, ciepłe drewno.",
+     "prompt": "jazz, a smoky late-night club with brass instruments and warm wood",
+     "colors": null,
+     "sample": "/options/starter/genre/jazz.webp"
+    },
+    {
+     "code": "blues",
+     "label": "Blues",
+     "description": "Bar o zmierzchu, wysłużona gitara.",
+     "prompt": "blues, a dusky delta bar with a worn guitar",
+     "colors": null,
+     "sample": "/options/starter/genre/blues.webp"
+    },
+    {
+     "code": "rock",
+     "label": "Rock",
+     "description": "Energia sceny, wzmacniacze, gitary.",
+     "prompt": "rock, stage energy with amplifiers and electric guitars",
+     "colors": null,
+     "sample": "/options/starter/genre/rock.webp"
+    },
+    {
+     "code": "metal",
+     "label": "Metal",
+     "description": "Ciemna scena, chrom, surowa moc.",
+     "prompt": "heavy metal, a dark stage with chrome and raw power",
+     "colors": null,
+     "sample": "/options/starter/genre/metal.webp"
+    },
+    {
+     "code": "pop",
+     "label": "Pop",
+     "description": "Błysk, jasne kolory, zabawa.",
+     "prompt": "pop, glossy, bright and fun",
+     "colors": null,
+     "sample": "/options/starter/genre/pop.webp"
+    },
+    {
+     "code": "classical",
+     "label": "Klasyka",
+     "description": "Sala koncertowa, smyczki, nuty.",
+     "prompt": "classical music, concert-hall elegance with strings and sheet music",
+     "colors": null,
+     "sample": "/options/starter/genre/classical.webp"
+    },
+    {
+     "code": "opera",
+     "label": "Opera",
+     "description": "Wielki teatr, aksamit i złocone loże.",
+     "prompt": "opera, a grand theatre with velvet curtains and gilded boxes",
+     "colors": null,
+     "sample": "/options/starter/genre/opera.webp"
+    },
+    {
+     "code": "hip_hop",
+     "label": "Hip-hop",
+     "description": "Ulica, gramofony, murale bez napisów.",
+     "prompt": "hip-hop, urban street culture with turntables and spray-painted walls without letters",
+     "colors": null,
+     "sample": "/options/starter/genre/hip_hop.webp"
+    },
+    {
+     "code": "electronic",
+     "label": "Elektronika",
+     "description": "Światła klubu, syntezatory, puls.",
+     "prompt": "electronic and techno, club lights, synthesizers and pulsing beats",
+     "colors": null,
+     "sample": "/options/starter/genre/electronic.webp"
+    },
+    {
+     "code": "disco",
+     "label": "Disco",
+     "description": "Kule lustrzane, blask, parkiet.",
+     "prompt": "disco, mirror balls, sparkle and a dance floor",
+     "colors": null,
+     "sample": "/options/starter/genre/disco.webp"
+    },
+    {
+     "code": "funk",
+     "label": "Funk",
+     "description": "Kolory lat 70., gitary basowe.",
+     "prompt": "funk, groovy 1970s colour and bass guitars",
+     "colors": null,
+     "sample": "/options/starter/genre/funk.webp"
+    },
+    {
+     "code": "soul",
+     "label": "Soul",
+     "description": "Ciepła scena, stare mikrofony.",
+     "prompt": "soul, a warm vintage stage with old microphones",
+     "colors": null,
+     "sample": "/options/starter/genre/soul.webp"
+    },
+    {
+     "code": "reggae",
+     "label": "Reggae",
+     "description": "Karaibskie słońce: czerwień, złoto, zieleń.",
+     "prompt": "reggae, Caribbean sunshine in red, gold and green",
+     "colors": null,
+     "sample": "/options/starter/genre/reggae.webp"
+    },
+    {
+     "code": "country",
+     "label": "Country",
+     "description": "Preria o zachodzie, gitara i banjo.",
+     "prompt": "country, a prairie sunset with acoustic guitar and banjo",
+     "colors": null,
+     "sample": "/options/starter/genre/country.webp"
+    },
+    {
+     "code": "folk",
+     "label": "Folk",
+     "description": "Ręcznie robione instrumenty, rustykalne ciepło.",
+     "prompt": "folk, handmade instruments and rustic warmth",
+     "colors": null,
+     "sample": "/options/starter/genre/folk.webp"
+    },
+    {
+     "code": "latin",
+     "label": "Latino",
+     "description": "Salsa i tango, trąbki, marakasy.",
+     "prompt": "Latin, salsa and tango passion with trumpets and maracas",
+     "colors": null,
+     "sample": "/options/starter/genre/latin.webp"
+    },
+    {
+     "code": "lofi",
+     "label": "Lo-fi",
+     "description": "Przytulny pokój, słuchawki, deszcz za oknem.",
+     "prompt": "lo-fi, a cosy bedroom studio with headphones and a rainy window",
+     "colors": null,
+     "sample": "/options/starter/genre/lofi.webp"
+    },
+    {
+     "code": "gospel",
+     "label": "Gospel",
+     "description": "Radosne światło chóru.",
+     "prompt": "gospel, joyful choir light and uplifting warmth",
+     "colors": null,
+     "sample": "/options/starter/genre/gospel.webp"
+    },
+    {
+     "code": "celtic",
+     "label": "Celtycki",
+     "description": "Skrzypce, harfy i zielone wzgórza.",
+     "prompt": "Celtic, fiddles, harps and misty green hills",
+     "colors": null,
+     "sample": "/options/starter/genre/celtic.webp"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-brand-bg: #000000;
+  --color-brand-panel: #0b0b0d;
+  --color-brand-raised: #141418;
+  --color-brand-accent: #06b6d4;
+}
+
+@layer base {
+  /* The app is a locked single screen: the page itself never scrolls (views fit the viewport). */
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html,
+  body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-brand-bg text-slate-200 font-sans antialiased selection:bg-cyan-500/30;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a,
+  label,
+  select,
+  input {
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-cyan-400;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-brand-panel border border-white/10 rounded-2xl;
+  }
+
+  .field {
+    @apply w-full h-14 bg-brand-raised border border-white/10 rounded-xl px-4 text-base text-white placeholder:text-slate-500 outline-none transition-colors focus:border-cyan-400/60;
+  }
+
+  .field-label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5;
+  }
+}
+
+/* Assistant replies (react-markdown), in the style of the CannaTinker chat. */
+.markdown-body > * + * {
+  margin-top: 0.6em;
+}
+.markdown-body strong {
+  @apply text-cyan-200 font-semibold;
+}
+.markdown-body em {
+  @apply text-slate-300;
+}
+.markdown-body a {
+  @apply text-cyan-300 underline decoration-dotted underline-offset-4;
+}
+.markdown-body ul {
+  @apply list-disc pl-5 space-y-1;
+}
+.markdown-body ol {
+  @apply list-decimal pl-5 space-y-1;
+}
+.markdown-body code {
+  @apply text-amber-300 bg-white/5 px-1 rounded font-mono text-[0.9em];
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  @apply font-display font-semibold text-white text-base;
+}
+.markdown-body table {
+  @apply w-full text-sm border border-white/10 rounded-lg overflow-hidden;
+}
+.markdown-body th {
+  @apply bg-white/5 text-left font-semibold px-3 py-2 border-b border-white/10;
+}
+.markdown-body td {
+  @apply px-3 py-2 border-b border-white/5 align-top;
+}
+.markdown-body blockquote {
+  @apply border-l-2 border-cyan-400/40 pl-3 text-slate-300;
+}
+
+/*
+ * Option groups (ported from Kuźnia inspiracji, resources/css/app.css). Every group sets its own --tone; its
+ * circle is tinted with it, lights up under the finger and glows fully once something is chosen.
+ */
+.tone-circle {
+  color: var(--tone);
+  background: radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--tone) 22%, transparent), color-mix(in oklab, var(--tone) 6%, transparent) 70%);
+  border: 2px solid color-mix(in oklab, var(--tone) 35%, transparent);
+  box-shadow: 0 0 20px -8px color-mix(in oklab, var(--tone) 70%, transparent);
+  transition: box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms, transform 120ms;
+}
+button:hover > .tone-circle,
+.tone-circle.is-open {
+  border-color: color-mix(in oklab, var(--tone) 75%, transparent);
+  box-shadow: 0 0 28px -4px color-mix(in oklab, var(--tone) 75%, transparent);
+}
+button:active > .tone-circle {
+  transform: scale(0.95);
+}
+.tone-circle.is-chosen {
+  border-color: var(--tone);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--tone) 30%, transparent), 0 0 34px -4px color-mix(in oklab, var(--tone) 85%, transparent);
+}
+.tone-circle > svg {
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--tone) 70%, transparent));
+}
+
+/*
+ * The option window: a native modal <dialog> in the top layer, centred. Sized so four rows of four square
+ * thumbnails, the header and the page row always fit: width min(94vw, 60rem, 100dvh − 21rem).
+ */
+.option-window {
+  width: min(94vw, 60rem, calc(100dvh - 21rem));
+  min-width: min(94vw, 20rem);
+  max-height: calc(100dvh - 1rem);
+}
+.option-window::backdrop,
+.option-zoom::backdrop {
+  background: rgb(0 0 0 / 0.8);
+  backdrop-filter: blur(4px);
+}
+.option-thumb {
+  border: 2px solid rgb(255 255 255 / 0.1);
+  transition: box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms;
+}
+button:hover > .option-thumb {
+  border-color: color-mix(in oklab, var(--tone) 60%, transparent);
+}
+[aria-checked='true'] > .option-thumb {
+  border-color: var(--tone);
+  box-shadow: 0 0 22px -4px var(--tone);
+}
