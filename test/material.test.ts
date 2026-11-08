@@ -7,6 +7,8 @@ import { audioKind } from '../server/audio';
 import { getFlowModel, flowClipFor } from '../src/flow';
 import type { MaterialDraft, MaterialRequest } from '../src/material';
 import type { ParallaxScene } from '../src/muzaik';
+import { PLACEHOLDER_PROFILE, normalizeProfile, getPreset } from '../src/profile';
+import { selfCheck, voiceoverMaxChars, AI_TOOL_NAMES } from '../server/materialPlan';
 
 // Pure logic of the studio: the bar grid, the code checks after the model, the channel copy rules, the DB row mapping.
 // Fixtures are synthetic (no real track data).
@@ -69,15 +71,16 @@ test('end card is at least 2.5 s', () => {
 const scene: ParallaxScene = { id: 'scena-1', title: 'Neon', accent: '#22d3ee', intensity: 50, layers: [{ url: '/media/a.webp', depth: 0.3, description: '', prompt: '' }], thumbnail: '', hero: '', place: '', light: '', timeOfDay: '', style: '', moods: [], palette: [], onAir: true };
 const req = (over: Partial<MaterialRequest> = {}): MaterialRequest => ({
   kind: 'zwiastun', seconds: 30, format: '16:9', alsoOther: true, trackId: 1, sceneIds: ['scena-1'], premiereId: null, articleSlug: null,
-  topic: '', notes: '', flowModel: 'veo-3.1-fast', freeOnly: false, ...over,
+  topic: '', notes: '', flowModel: 'veo-3.1-fast', freeOnly: false, preset: null, voiceover: false, ...over,
 });
 const ctx = (over: Partial<PlanContext> = {}): PlanContext => ({
-  request: req(), cut: chooseCut(track, 30, 'zwiastun'), track: null, scenes: [scene], premiere: null, article: null, siteUrl: 'https://muzaik.channel', ...over,
+  request: req(), cut: chooseCut(track, 30, 'zwiastun'), track: null, scenes: [scene], premiere: null, article: null, siteUrl: 'https://muzaik.channel', profile: PLACEHOLDER_PROFILE, preset: null, ...over,
 });
 const draft = (shots: Partial<MaterialDraft['shots'][number]>[]): MaterialDraft => ({
   concept: 'k', hook: 'h', styleAnchor: 'Neon night, 1980s film grain.',
-  shots: shots.map((s) => ({ bars: 2, role: 'build', visual: 'flow', prompt: 'A neon road at night', mode: 'text', reference: null, sceneId: null, cardText: null, note: 'n', ...s })),
-  copy: { title: 'Nocna jazda', description: 'Zapraszam.', tags: ['synthwave'], hashtags: ['synthwave'] },
+  shots: shots.map((s) => ({ bars: 2, role: 'build', visual: 'flow', prompt: 'A neon road at night', mode: 'text', reference: null, sceneId: null, cardText: null, camera: 'wide, slow push-in', light: 'sodium street light', transition: 'cięcie na takt', overlayText: null, voiceover: null, note: 'n', ...s })),
+  thumbnail: { prompt: 'A neon road at night', overlayOptions: ['Nocna jazda', 'Gemini mówi', 'Za długi napis na miniaturę'] },
+  copy: { title: 'Nocna jazda', description: 'Zapraszam.', tags: ['synthwave'], hashtags: ['synthwave'], pinnedComment: 'Która scena najlepsza?' },
 });
 
 test('finalize: shots fill the cut exactly, the last one is the code-written end card', () => {
@@ -152,4 +155,61 @@ test('audio magic bytes', () => {
   assert.equal(audioKind(Buffer.from('ID3\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000')), 'mp3');
   assert.equal(audioKind(Buffer.from('RIFF\u0000\u0000\u0000\u0000WAVEfmt ')), 'wav');
   assert.equal(audioKind(Buffer.from('<html><body>nope</body></html>')), null);
+});
+
+test('profile: placeholder by default, partial import keeps valid fields, conflicts never taken over', () => {
+  assert.equal(PLACEHOLDER_PROFILE.placeholder, true);
+  assert.doesNotMatch(JSON.stringify(PLACEHOLDER_PROFILE), /Beti|DarkaIK|istrella/i);
+  const p = normalizeProfile({ slogan: 'Nowe hasło', purpleMaxPercent: 'dużo', placeholder: false });
+  assert.equal(p.slogan, 'Nowe hasło');
+  assert.equal(p.purpleMaxPercent, PLACEHOLDER_PROFILE.purpleMaxPercent);
+  assert.equal(p.placeholder, false);
+  assert.ok(getPreset('nostalgia_nowy_wymiar'));
+});
+
+test('finalize: camera/light in the Flow prompt, purple rule, voice-over fits the shot, AI names removed', () => {
+  const out = finalizeDraft(draft([{ bars: 2, voiceover: 'To jest bardzo długa kwestia lektora, która na pewno nie zmieści się w czterech sekundach ujęcia, więc program ją skróci. Drugie zdanie.' }, { bars: 4, overlayText: 'Zrobione w Suno' }]), ctx({ request: req({ voiceover: true }) }));
+  const first = out.shots[0];
+  assert.match(first.flowPrompt, /Camera: wide, slow push-in/);
+  assert.match(first.flowPrompt, /Purple and magenta only as a small accent/);
+  assert.ok(!first.voiceover || first.voiceover.length <= voiceoverMaxChars(first.seconds) + 1);
+  assert.equal(out.shots[1].overlayText, null);
+  assert.deepEqual(out.thumbnail.overlayOptions, ['Nocna jazda', 'Za długi napis']);
+  assert.match(out.thumbnail.prompt, /No on-screen text/);
+});
+
+test('voice-over off → no lines even if the model wrote them', () => {
+  const out = finalizeDraft(draft([{ bars: 4, voiceover: 'Hej, tu DJ MuzaIK.' }]), ctx());
+  assert.ok(out.shots.every((s) => s.voiceover === null));
+});
+
+test('self-check: clean project passes errors; AI tool name and foreign link are caught', () => {
+  const c = ctx();
+  const fin = finalizeDraft(draft([{ bars: 13 }]), c);
+  const project = { shots: fin.shots, copy: fin.copy, thumbnail: fin.thumbnail, cut: c.cut, request: c.request };
+  const ok = selfCheck(project, c);
+  assert.ok(ok.filter((x) => x.level === 'error').every((x) => x.ok), JSON.stringify(ok.filter((x) => !x.ok)));
+  const bad = selfCheck({ ...project, copy: { ...project.copy, title: 'Nowy hit z Gemini', description: project.copy.description + ' https://evil.example' } }, c);
+  assert.equal(bad.find((x) => x.id === 'ai')!.ok, false);
+  assert.equal(bad.find((x) => x.id === 'links')!.ok, false);
+  assert.ok(AI_TOOL_NAMES.test('Veo'));
+});
+
+test('copy: profile links allowed and listed in the footer; shop link only when allowed', () => {
+  const fixes: string[] = [];
+  const withShop = { ...PLACEHOLDER_PROFILE, descriptionLinks: ['website', 'radio', 'shop'] };
+  const c = cleanCopy({ title: 'T', description: 'Zobacz https://store.vizai.art/x', tags: [], hashtags: [], pinnedComment: 'Pisz w komentarzu https://x.y' }, ctx({ profile: withShop }), fixes);
+  assert.match(c.description, /store\.vizai\.art\/x/);
+  assert.match(c.description, /Radio MuzaIK 24\/7: https:\/\/muzaik\.channel\/radio/);
+  assert.doesNotMatch(c.pinnedComment, /https?:/);
+  const c2 = cleanCopy({ title: 'T', description: 'Zobacz https://store.vizai.art/x', tags: [], hashtags: [] }, ctx(), []);
+  assert.doesNotMatch(c2.description, /store\.vizai\.art/);
+});
+
+test('self-check: "24/7" is not a date, a made-up date is flagged', () => {
+  const c = ctx();
+  const fin = finalizeDraft(draft([{ bars: 13 }]), c);
+  const base = { shots: fin.shots, copy: fin.copy, thumbnail: fin.thumbnail, cut: c.cut, request: c.request };
+  assert.equal(selfCheck({ ...base, copy: { ...base.copy, description: 'Radio 24/7' } }, c).find((x) => x.id === 'dates')!.ok, true);
+  assert.equal(selfCheck({ ...base, copy: { ...base.copy, description: 'Premiera 12 grudnia 2026' } }, c).find((x) => x.id === 'dates')!.ok, false);
 });

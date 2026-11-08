@@ -7,10 +7,12 @@ import type { ProviderService } from './providers';
 import { structuredCall } from './research';
 import { toHttpError } from './errors';
 import { MATERIAL_SYSTEM, materialPrompt } from './prompts';
-import { finalizeDraft, cleanCopy, type PlanContext } from './materialPlan';
+import { finalizeDraft, cleanCopy, selfCheck, type PlanContext } from './materialPlan';
+import { getPreset, normalizeProfile, PLACEHOLDER_PROFILE, PROFILE_CONFLICTS, AESTHETIC_PRESETS, type ChannelProfile } from '../src/profile';
 import { MuzaikData } from './muzaikData';
 import { AudioError, AudioService, MAX_AUDIO_BYTES } from './audio';
-import { probeDuration, renderProject, RenderError } from './render';
+import { probeDuration, renderProject, RenderError, drawThumbnail, composeScene, frameAt, coverStill } from './render';
+import { synthesizeSpeech } from './voice';
 import { chooseCut, endCardBars } from '../src/beat';
 import { FLOW_MODELS, getFlowModel } from '../src/flow';
 import { LEGACY_NAMES, type ParallaxScene, type TrackCard } from '../src/muzaik';
@@ -24,6 +26,7 @@ import type { StreamEvent } from '../src/types';
 // Projects are docs `materials` (index) + `material_<id>`; files in data/materials/<id>/ (clips/, rendered mp4).
 
 const INDEX = 'materials';
+const PROFILE_DOC = 'channel_profile';
 const MAX_PROJECTS = 200;
 const MAX_CLIP_BYTES = 400 * 1024 * 1024;
 
@@ -40,6 +43,8 @@ function videoKind(buf: Buffer): 'mp4' | 'mov' | 'webm' | null {
   return null;
 }
 
+const DJ_VOICE_STYLE = 'Przeczytaj po polsku jak nocny radiowy DJ: ciepło, pewnie, spokojnie, z lekkim uśmiechem i pauzą na końcu zdania:';
+
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(LEGACY_NAMES, 'MuzaIK').trim().slice(0, max) : '');
 
 export class MaterialService {
@@ -49,6 +54,22 @@ export class MaterialService {
 
   constructor(private readonly store: SettingsStore, private readonly providers: ProviderService, readonly muzaik: MuzaikData, readonly audio: AudioService, appDir: string) {
     this.dir = path.join(appDir, 'data', 'materials');
+  }
+
+  async profile(): Promise<ChannelProfile> {
+    return normalizeProfile(await this.store.getDoc(PROFILE_DOC));
+  }
+
+  async saveProfile(raw: unknown): Promise<ChannelProfile> {
+    if (!raw || typeof raw !== 'object') throw new MaterialError('To nie jest profil kanału (oczekiwany obiekt JSON).');
+    const next = normalizeProfile({ ...(await this.profile()), ...(raw as Record<string, unknown>), updatedAt: new Date().toISOString() });
+    await this.store.saveDoc(PROFILE_DOC, next);
+    return next;
+  }
+
+  async resetProfile(): Promise<ChannelProfile> {
+    await this.store.saveDoc(PROFILE_DOC, PLACEHOLDER_PROFILE);
+    return PLACEHOLDER_PROFILE;
   }
 
   private serial<T>(fn: () => Promise<T>): Promise<T> {
@@ -66,6 +87,13 @@ export class MaterialService {
     if (!/^[a-f0-9-]{36}$/.test(id)) return null;
     const doc = (await this.store.getDoc(`material_${id}`)) as unknown as MaterialProject;
     if (!doc || doc.id !== id) return null;
+    // Projects saved before the AI Studio additions (2026-11-08) get the new fields empty.
+    doc.thumbnail ??= { prompt: '', overlayOptions: [], file: null, text: null };
+    doc.checks ??= [];
+    doc.copy.pinnedComment ??= '';
+    doc.request.preset ??= null;
+    doc.request.voiceover ??= false;
+    for (const sh of doc.shots) { sh.camera ??= ''; sh.light ??= ''; sh.transition ??= ''; sh.overlayText ??= null; sh.voiceover ??= null; }
     // Only one render runs per process; a 'running' state that isn't ours is left over from a restart.
     if (doc.render.state === 'running' && this.rendering !== id) doc.render = { state: 'error', message: 'Render przerwany (restart aplikacji). Uruchom go jeszcze raz.', at: Date.now() };
     return doc;
@@ -99,11 +127,13 @@ export class MaterialService {
       topic: text(body.topic, 300), notes: text(body.notes, 1500),
       flowModel: FLOW_MODELS.some((m) => m.id === body.flowModel) ? String(body.flowModel) : getFlowModel(undefined).id,
       freeOnly: body.freeOnly === true,
+      preset: typeof body.preset === 'string' && getPreset(body.preset) ? body.preset : null,
+      voiceover: body.voiceover === true,
     };
   }
 
   /** Everything the plan needs, checked: covers are refused, a track is required where the kind needs one. */
-  context(request: MaterialRequest): PlanContext {
+  async context(request: MaterialRequest): Promise<PlanContext> {
     const ov = this.muzaik.overview();
     let track: TrackCard | null = null;
     if (request.trackId != null) {
@@ -120,12 +150,14 @@ export class MaterialService {
     const scenes = wanted.length ? wanted : ov.scenes.filter((s) => s.onAir).slice(0, 1);
     const cut = track ? chooseCut(track, request.seconds, request.kind) : null;
     if (track && !cut) throw new MaterialError(`Karta „${track.title}” nie ma długości utworu — odśwież pomiar w muzaik.channel.`);
-    return { request, cut, track, scenes, premiere, article, siteUrl: ov.brand.siteUrl };
+    const profile = await this.profile();
+    const preset = getPreset(request.preset) ?? (request.kind === 'zwiastun' ? getPreset(profile.channelTeaserPreset) : null);
+    return { request, cut, track, scenes, premiere, article, siteUrl: ov.brand.siteUrl, profile, preset };
   }
 
   async design(body: Record<string, unknown>, onStatus: (m: string) => void, signal?: AbortSignal): Promise<MaterialProject> {
     const request = this.parseRequest(body);
-    const ctx = this.context(request);
+    const ctx = await this.context(request);
     const engine = await this.providers.resolveEngine();
     if ('error' in engine) throw new MaterialError(engine.error);
     const ov = this.muzaik.overview();
@@ -155,6 +187,26 @@ export class MaterialService {
       article: ctx.article ? `Tytuł: ${ctx.article.title}\nDział: ${ctx.article.section}\nStreszczenie: ${ctx.article.summary}` : null,
       brand: `Tło ${ov.brand.colors.bg}, akcenty: cyan ${ov.brand.colors.cyan}, fiolet ${ov.brand.colors.purple}, róż ${ov.brand.colors.pink}. Kroje plansz: Audiowide (tytuły), Rajdhani.`,
       topic: request.topic, notes: request.notes,
+      profile: [
+        ctx.profile.placeholder ? 'UWAGA: dane wstępne z modułu AI Studio — traktuj jako kierunek, nie cytuj ich jako faktów.' : '',
+        `Hasło marki: ${ctx.profile.slogan}`, `Idea: ${ctx.profile.concept}`,
+        `Filary brzmienia: ${ctx.profile.pillars.map((p) => p.name).join(' · ')}; poboczne: ${ctx.profile.secondary.join(', ')}`,
+        `Seria: ${ctx.profile.series.map((x) => `„${x.name}” (${x.format})`).join(', ')}`,
+        `Maskotki ekipy (${ctx.profile.mascots.count}, ${ctx.profile.mascots.style}): ${ctx.profile.mascots.names.join(', ')} — mogą być cameo, przejściem albo na planszy końcowej.`,
+        `Styl obrazu: ${ctx.profile.visualStyle}. Nigdy: ${ctx.profile.visualNever.join(', ')}.`,
+        ctx.profile.museMotif,
+        `Fiolet i magenta najwyżej jako akcent (≤ ${ctx.profile.purpleMaxPercent}% kadru) — szersza paleta: błękit nocny, turkus, szmaragd, bursztyn, czerwień neonowa, złoto, biel lodowa, koral.`,
+        `Lektor DJ MuzaIK: ${ctx.profile.djVoice}.`,
+        ctx.profile.descriptionVoice === 'dj'
+          ? 'Opis na YouTube pisze DJ MuzaIK: o sobie w 1. osobie, o twórczyni i kanale w 3. osobie („Twórczyni MuzaIK przygotowała…”). Imienia twórczyni nie podawaj.'
+          : 'Opis na YouTube pisze Twórczyni MuzaIK: 1. osoba, rodzaj żeński.',
+      ].filter(Boolean).join('\n'),
+      preset: ctx.preset ? [
+        `${ctx.preset.name} — ${ctx.preset.subtitle}. ${ctx.preset.description}`,
+        `Paleta HEX: ${ctx.preset.paletteHex.join(', ')}. Unikaj: ${ctx.preset.avoid.join(', ')}.`,
+        `Światło: ${ctx.preset.lighting}. Faktura: ${ctx.preset.texture}.`,
+      ].join('\n') : null,
+      voiceover: request.voiceover,
     });
     const draft = await structuredCall(engine, MaterialDraftSchema, `${MATERIAL_SYSTEM}\n\n---\n\n${prompt}`, signal);
     if (!draft) throw new MaterialError('Model nie oddał poprawnego planu (albo odmówił). Spróbuj jeszcze raz albo zmień silnik w Ustawieniach.');
@@ -165,9 +217,10 @@ export class MaterialService {
     const project: MaterialProject = {
       id: crypto.randomUUID(), createdAt: now, updatedAt: now, request, trackTitle: t?.title ?? null,
       concept: draft.concept.replace(LEGACY_NAMES, 'MuzaIK').slice(0, 1200), hook: draft.hook.replace(LEGACY_NAMES, 'MuzaIK').slice(0, 600),
-      styleAnchor: fin.styleAnchor, cut: ctx.cut, shots: fin.shots, copy: fin.copy, fixes: fin.fixes,
+      styleAnchor: fin.styleAnchor, cut: ctx.cut, shots: fin.shots, copy: fin.copy, thumbnail: fin.thumbnail, checks: [], fixes: fin.fixes,
       render: { state: 'none' }, published: [], model: `${engine.provider} · ${engine.model}`,
     };
+    project.checks = selfCheck(project, ctx);
     await this.serial(async () => {
       await this.save(project);
       const ids = [project.id, ...(await this.ids())];
@@ -189,8 +242,9 @@ export class MaterialService {
           description: typeof c.description === 'string' ? stripFooter(c.description, p) : stripFooter(p.copy.description, p),
           tags: strArr(c.tags) ?? p.copy.tags,
           hashtags: strArr(c.hashtags) ?? p.copy.hashtags,
+          pinnedComment: typeof c.pinnedComment === 'string' ? c.pinnedComment : p.copy.pinnedComment,
         };
-        p.copy = cleanCopy(draftCopy, this.contextFor(p), fixes);
+        p.copy = cleanCopy(draftCopy, await this.contextFor(p), fixes);
       }
       if (Array.isArray(body.shots)) {
         for (const raw of body.shots as Record<string, unknown>[]) {
@@ -199,21 +253,30 @@ export class MaterialService {
           if (typeof raw.flowPrompt === 'string' && shot.visual === 'flow') shot.flowPrompt = text(raw.flowPrompt, 2500);
           if (typeof raw.cardText === 'string' && shot.visual === 'plansza') shot.cardText = text(raw.cardText, 80).split(/\s+/).slice(0, 6).join(' ');
           if (typeof raw.note === 'string') shot.note = text(raw.note, 500);
+          if (typeof raw.overlayText === 'string' && shot.visual !== 'plansza') shot.overlayText = text(raw.overlayText, 60).split(/\s+/).slice(0, 5).join(' ') || null;
+          if (typeof raw.voiceover === 'string' && p.request.voiceover) shot.voiceover = text(raw.voiceover, 600) || null;
         }
       }
       if (fixes.length) p.fixes = [...p.fixes, ...fixes].slice(-30);
       if (p.render.state === 'done') p.render = { state: 'none' };
+      await this.recheck(p);
       await this.save(p);
       return p;
     });
   }
 
-  private contextFor(p: MaterialProject): PlanContext {
+  private async contextFor(p: MaterialProject): Promise<PlanContext> {
     const t = p.request.trackId != null ? this.muzaik.track(p.request.trackId) : null;
     return {
       request: p.request, cut: p.cut, track: t, scenes: [], premiere: p.request.premiereId != null ? this.muzaik.premiere(p.request.premiereId) : null,
       article: p.request.articleSlug ? this.muzaik.article(p.request.articleSlug) : null, siteUrl: this.muzaik.overview().brand.siteUrl,
+      profile: await this.profile(), preset: getPreset(p.request.preset),
     };
+  }
+
+  /** Re-runs the channel checks after any change (copy, prompts, clips, thumbnail). */
+  private async recheck(p: MaterialProject) {
+    p.checks = selfCheck(p, await this.contextFor(p));
   }
 
   private async need(id: string): Promise<MaterialProject> {
@@ -263,6 +326,7 @@ export class MaterialService {
       if (!info) { fs.rmSync(file, { force: true }); throw new MaterialError('Nie umiem odczytać tego klipu (uszkodzony plik?).'); }
       if (shot.clip) fs.rmSync(path.join(dir, shot.clip), { force: true });
       shot.clip = name;
+      await this.recheck(p);
       if (info.seconds + 0.05 < shot.seconds) p.fixes = [...p.fixes, `Klip ujęcia ${p.shots.indexOf(shot) + 1} ma ${info.seconds.toFixed(1)} s, a ujęcie ${shot.seconds.toFixed(1)} s — ostatnia klatka zostanie przytrzymana.`].slice(-30);
       if (p.render.state === 'done') p.render = { state: 'none' };
       await this.save(p);
@@ -278,6 +342,7 @@ export class MaterialService {
         fs.rmSync(path.join(this.projectDir(id), 'clips', shot.clip), { force: true });
         shot.clip = null;
         if (p.render.state === 'done') p.render = { state: 'none' };
+        await this.recheck(p);
         await this.save(p);
       }
       return p;
@@ -311,8 +376,10 @@ export class MaterialService {
       const dir = this.projectDir(id);
       fs.mkdirSync(dir, { recursive: true });
       for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp4')) fs.rmSync(path.join(dir, f), { force: true });
+      const voiceFiles = await this.voiceovers(p, setStep);
       let last = 0;
       const result = await renderProject({
+        voiceFiles,
         project: p, brand: ov.brand, dir, trackFile, scenes, image: (url) => this.audio.publicImage(url),
         coverUrl: premiere?.cover || null, clipFile: (shot) => this.clipPath(p, shot.id),
         onStep: (step) => { if (Date.now() - last > 800) { last = Date.now(); void setStep(step); } },
@@ -328,6 +395,80 @@ export class MaterialService {
         const cur = await this.get(id);
         if (cur) { cur.render = { state: 'error', message: message.slice(0, 800), at: Date.now() }; await this.save(cur); }
       });
+    }
+  }
+
+  /** DJ MuzaIK lines → WAV (Gemini TTS, paid), cached per shot and text in the project folder. */
+  private async voiceovers(p: MaterialProject, setStep: (s: string) => Promise<void>): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    const lines = p.request.voiceover ? p.shots.filter((s) => s.voiceover) : [];
+    if (!lines.length) return out;
+    const key = await this.providers.getKey('google');
+    if (!key) throw new MaterialError('Lektor DJ MuzaIK potrzebuje klucza Google (Gemini) — dodaj go w Ustawieniach albo wyłącz lektora.');
+    const prefs = await this.providers.getPrefs();
+    const dir = path.join(this.projectDir(p.id), 'vo');
+    fs.mkdirSync(dir, { recursive: true });
+    for (const [i, shot] of lines.entries()) {
+      const hash = crypto.createHash('sha256').update(`${prefs.voice.ttsModel}|${prefs.voice.voiceName}|${shot.voiceover}`).digest('hex').slice(0, 12);
+      const file = path.join(dir, `${shot.id}-${hash}.wav`);
+      if (!fs.existsSync(file)) {
+        await setStep(`Lektor: kwestia ${i + 1} z ${lines.length}`);
+        fs.writeFileSync(file, await synthesizeSpeech(key, prefs.voice.ttsModel, prefs.voice.voiceName, shot.voiceover!, undefined, DJ_VOICE_STYLE));
+      }
+      out.set(shot.id, file);
+    }
+    return out;
+  }
+
+  thumbnailFile(p: MaterialProject): string | null {
+    if (!p.thumbnail?.file) return null;
+    const f = path.join(this.projectDir(p.id), p.thumbnail.file);
+    return fs.existsSync(f) ? f : null;
+  }
+
+  /** Free thumbnail: a frame of the film (at the refrain), the scene or the cover, plus a short title drawn by code. */
+  async makeThumbnail(id: string, body: Record<string, unknown>): Promise<MaterialProject> {
+    const p = await this.need(id);
+    const textIn = text(body.text, 40).split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
+    if (!textIn) throw new MaterialError('Wpisz napis na miniaturę (najwyżej 3 słowa).');
+    const source = body.source === 'scena' || body.source === 'okladka' ? body.source : 'film';
+    const dir = this.projectDir(id);
+    fs.mkdirSync(dir, { recursive: true });
+    const tmp = path.join(dir, `thumb-base-${Date.now()}.png`);
+    try {
+      if (source === 'film') {
+        const f = p.render.state === 'done' ? p.render.files.find((x) => x.format === '16:9') : undefined;
+        if (!f) throw new MaterialError('Najpierw zmontuj film w formacie 16:9 (albo wybierz scenę lub okładkę).');
+        // A shot with a real picture (not a text card, not a missing Flow clip): the one under the refrain, else the longest.
+        const pictured = p.shots.filter((sh) => sh.visual !== 'plansza' && !(sh.visual === 'flow' && !sh.clip));
+        const drop = p.cut?.dropAt;
+        const shot = pictured.find((sh) => drop != null && drop >= sh.at && drop < sh.at + sh.seconds) ?? [...pictured].sort((a, b) => b.seconds - a.seconds)[0];
+        const at = shot ? shot.at + shot.seconds / 2 : f.seconds * 0.4;
+        await frameAt(path.join(dir, f.name), at, tmp);
+      } else if (source === 'scena') {
+        const scene = this.muzaik.overview().scenes.find((sc) => p.request.sceneIds.includes(sc.id)) ?? this.muzaik.overview().scenes.find((sc) => sc.onAir);
+        if (!scene?.layers.length) throw new MaterialError('Ten materiał nie ma sceny Parallax.');
+        const files = [];
+        for (const l of [...scene.layers].sort((a, b) => a.depth - b.depth)) files.push(await this.audio.publicImage(l.url));
+        await composeScene(files, tmp);
+      } else {
+        const prem = p.request.premiereId != null ? this.muzaik.premiere(p.request.premiereId) : null;
+        if (!prem?.cover) throw new MaterialError('Ten materiał nie ma okładki premiery.');
+        await coverStill(await this.audio.publicImage(prem.cover), '16:9', tmp);
+      }
+      const jpg = await drawThumbnail(tmp, this.muzaik.overview().brand, textIn);
+      const name = `miniatura-${Date.now()}.jpg`;
+      return await this.serial(async () => {
+        const cur = await this.need(id);
+        if (cur.thumbnail.file) fs.rmSync(path.join(dir, cur.thumbnail.file), { force: true });
+        fs.writeFileSync(path.join(dir, name), jpg);
+        cur.thumbnail = { ...cur.thumbnail, file: name, text: textIn };
+        await this.recheck(cur);
+        await this.save(cur);
+        return cur;
+      });
+    } finally {
+      fs.rmSync(tmp, { force: true });
     }
   }
 
@@ -359,10 +500,15 @@ export function exportMarkdown(p: MaterialProject): string {
   lines.push(`Google Flow: ${getFlowModel(p.request.flowModel).label}`, '', '## Ujęcia', '');
   p.shots.forEach((s, i) => {
     lines.push(`### ${i + 1}. ${s.at.toFixed(2)}–${(s.at + s.seconds).toFixed(2)} s · ${s.bars} takt.`, '', s.note, '');
+    if (s.transition) lines.push(`Przejście: ${s.transition}`, '');
     if (s.visual === 'flow') lines.push(`Klip Flow: ${s.flowSeconds ?? '?'} s · tryb ${s.mode}${s.reference ? ` · obraz: ${s.reference}` : ''}`, '', '```', s.flowPrompt, '```', '');
     else lines.push(`Render programu: ${s.visual}${s.cardText ? ` — „${s.cardText.replace(/\n/g, ' / ')}”` : ''}`, '');
+    if (s.overlayText) lines.push(`Napis na obrazie: „${s.overlayText}”`, '');
+    if (s.voiceover) lines.push(`Lektor DJ MuzaIK: „${s.voiceover}”`, '');
   });
-  lines.push('## YouTube', '', `**Tytuł:** ${p.copy.title}`, '', '**Opis:**', '', p.copy.description, '', `**Tagi:** ${p.copy.tags.join(', ')}`, '');
+  if (p.thumbnail?.prompt) lines.push('## Miniatura', '', `Napisy do wyboru: ${p.thumbnail.overlayOptions.join(' · ')}`, '', '```', p.thumbnail.prompt, '```', '');
+  lines.push('## YouTube', '', `**Tytuł:** ${p.copy.title}`, '', '**Opis:**', '', p.copy.description, '', `**Tagi:** ${p.copy.tags.join(', ')}`, '', `**Przypięty komentarz:** ${p.copy.pinnedComment}`, '');
+  if (p.checks?.length) lines.push('## Kontrola zasad', '', ...p.checks.map((c) => `- ${c.ok ? '✅' : c.level === 'error' ? '❌' : '⚠️'} ${c.label} — ${c.detail}`), '');
   return lines.join('\n');
 }
 
@@ -383,7 +529,7 @@ export function createMaterialsRouter(svc: MaterialService, openEventStream: Ope
     let request: MaterialRequest;
     try {
       request = svc.parseRequest(req.body ?? {});
-      svc.context(request);
+      await svc.context(request);
     } catch (err) {
       return fail(res, err);
     }
@@ -442,6 +588,19 @@ export function createMaterialsRouter(svc: MaterialService, openEventStream: Ope
     res.sendFile(f);
   });
 
+  router.post('/:id/thumbnail', async (req, res) => {
+    try { res.json({ material: await svc.makeThumbnail(req.params.id, req.body ?? {}) }); } catch (err) { fail(res, err); }
+  });
+
+  router.get('/:id/thumbnail.jpg', async (req, res) => {
+    const p = await svc.get(req.params.id).catch(() => null);
+    const f = p ? svc.thumbnailFile(p) : null;
+    if (!f) return res.status(404).json({ error: 'Brak miniatury.' });
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (req.query.download === '1') res.attachment('miniatura.jpg');
+    res.sendFile(f);
+  });
+
   router.get('/:id/export.md', async (req, res) => {
     const p = await svc.get(req.params.id).catch(() => null);
     if (!p) return res.status(404).json({ error: 'Nie ma takiego materiału.' });
@@ -456,6 +615,11 @@ export function createMaterialsRouter(svc: MaterialService, openEventStream: Ope
 export function createMuzaikRouter(svc: MaterialService): express.Router {
   const router = express.Router();
   router.get('/', (req, res) => res.json(svc.muzaik.overview(req.query.refresh === '1')));
+  router.get('/profile', async (_req, res) => res.json({ profile: await svc.profile(), conflicts: PROFILE_CONFLICTS, presets: AESTHETIC_PRESETS }));
+  router.put('/profile', async (req, res) => {
+    try { res.json({ profile: await svc.saveProfile(req.body?.profile ?? req.body), conflicts: PROFILE_CONFLICTS, presets: AESTHETIC_PRESETS }); } catch (err) { res.status(400).json({ error: (err as Error).message }); }
+  });
+  router.post('/profile/reset', async (_req, res) => res.json({ profile: await svc.resetProfile(), conflicts: PROFILE_CONFLICTS, presets: AESTHETIC_PRESETS }));
   router.get('/azuracast', async (_req, res) => res.json(await svc.audio.azuraStatus()));
   router.put('/azuracast', async (req, res) => {
     try { res.json(await svc.audio.saveAzura(req.body ?? {})); } catch (err) { res.status(400).json({ error: (err as Error).message }); }

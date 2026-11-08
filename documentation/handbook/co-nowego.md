@@ -4,6 +4,13 @@ Zmiany w aplikacji opisane prosto, od najnowszych.
 
 **Gdzie:** cała aplikacja · **Potrzebne:** nic
 
+## 8 listopada 2026 — z modułu AI Studio
+
+- **Presety estetyczne** i **lektor DJ MuzaIK** w briefie.
+- **Napisy na obrazie**, **miniatura** z napisem, **przypięty komentarz**, **Wariant**.
+- **Kontrola zasad kanału** — tarcza z wynikiem przy projekcie.
+- **Ustawienia → Profil**: profil kanału z danymi wstępnymi do wymiany. Zobacz [Miniatura, lektor i kontrola](#handbook/miniatura-i-kontrola) i [Profil kanału](#handbook/profil-kanalu).
+
 ## 8 listopada 2026 — pierwsza wersja
 
 - **Studio**: zwiastun kanału i sześć innych rodzajów materiałów. Program tnie utwór do taktów, DJ MuzaIK rozpisuje ujęcia.

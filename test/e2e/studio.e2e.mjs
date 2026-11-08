@@ -37,6 +37,8 @@ await noScroll(page, 'centrum');
 await page.getByRole('button', { name: /^Zwiastun kanału 16:9/ }).click();
 await page.getByLabel('Utwór').selectOption('101');
 await page.getByText(/plik z pamięci podcastów|plik utworu jest w aplikacji/).waitFor();
+await page.getByRole('switch', { name: /Lektor DJ MuzaIK/ }).click();
+await page.getByLabel('Preset estetyczny').selectOption('dark_dance_noir');
 await page.screenshot({ path: path.join(out, '2-brief.png') });
 await noScroll(page, 'brief');
 
@@ -53,6 +55,17 @@ await page.locator('video').first().waitFor({ timeout: 240000 });
 await page.screenshot({ path: path.join(out, '4-montaz.png') });
 await noScroll(page, 'montaż');
 
+await page.getByRole('button', { name: 'Miniatura' }).click();
+await page.getByRole('radio', { name: /Klatka z filmu/ }).click();
+await page.getByRole('button', { name: /Zrób miniaturę/ }).click();
+await page.getByAltText(/Miniatura:/).waitFor({ timeout: 60000 });
+await page.screenshot({ path: path.join(out, '4b-miniatura.png') });
+await page.keyboard.press('Escape');
+await page.getByRole('button', { name: /Kontrola zasad kanału/ }).click();
+await page.getByText('Kontrola zasad kanału', { exact: true }).waitFor();
+await page.screenshot({ path: path.join(out, '4c-kontrola.png') });
+await page.keyboard.press('Escape');
+
 await page.locator('[aria-label^="Ujęcie 1,"]').click();
 await page.getByText('Prompt do Flow (angielski)').waitFor();
 await page.screenshot({ path: path.join(out, '5-ujecie.png') });
@@ -64,6 +77,11 @@ for (const [w, h] of [[1280, 720], [1480, 924]]) {
   await noScroll(page, `projekt ${w}×${h}`);
 }
 await page.screenshot({ path: path.join(out, '5b-projekt-1480x924.png') });
+await page.getByRole('button', { name: 'Ustawienia' }).first().click();
+await page.getByRole('tab', { name: /Profil/ }).click();
+await page.getByText(/Dane wstępne do wymiany/).waitFor();
+await page.screenshot({ path: path.join(out, '5c-profil.png') });
+await page.keyboard.press('Escape');
 await page.setViewportSize({ width: 390, height: 844 });
 await page.waitForTimeout(400);
 const sw = await page.evaluate(() => document.documentElement.scrollWidth);

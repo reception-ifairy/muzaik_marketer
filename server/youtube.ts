@@ -226,6 +226,15 @@ export class YoutubeService {
     }
   }
 
+  /** Custom thumbnail (JPEG ≤ 2 MB). YouTube allows it only on verified channels; an error is returned, not thrown away. */
+  async setThumbnail(videoId: string, jpeg: Buffer): Promise<void> {
+    if (!/^[\w-]{11}$/.test(videoId)) throw new YoutubeError('Zły identyfikator filmu.');
+    if (jpeg.length > 2 * 1024 * 1024) throw new YoutubeError('Miniatura jest większa niż 2 MB.');
+    const token = await this.writeToken();
+    const res = await fetch(`${UPLOAD_API()}/thumbnails/set?videoId=${videoId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/jpeg' }, body: jpeg });
+    if (!res.ok) throw new YoutubeError(`YouTube nie przyjął miniatury: ${(await res.text()).slice(0, 300)}`, 502);
+  }
+
   /** Sets the video as the channel trailer for non-subscribers; every other branding field is sent back unchanged. */
   async setChannelTrailer(videoId: string): Promise<void> {
     if (!/^[\w-]{11}$/.test(videoId)) throw new YoutubeError('Zły identyfikator filmu.');
@@ -270,13 +279,19 @@ export function createYoutubeRouter(yt: YoutubeService, materials: MaterialServi
       if (!file || p.render.state !== 'done') return res.status(400).json({ error: 'Najpierw wyrenderuj film.' });
       const format = p.render.files.find((f) => f.name === name)!.format;
       const videoId = await yt.uploadPrivate(file, { title: p.copy.title, description: p.copy.description, tags: p.copy.tags, madeForKids: req.body.madeForKids });
+      let thumbOk = false;
+      let thumbError: string | null = null;
+      const thumbFile = req.body?.withThumbnail === true ? materials.thumbnailFile(p) : null;
+      if (thumbFile) {
+        try { await yt.setThumbnail(videoId, fs.readFileSync(thumbFile)); thumbOk = true; } catch (err) { thumbError = (err as Error).message; }
+      }
       let trailer = false;
       let trailerError: string | null = null;
       if (req.body?.asChannelTrailer === true && p.request.kind === 'zwiastun') {
         try { await yt.setChannelTrailer(videoId); trailer = true; } catch (err) { trailerError = (err as Error).message; }
       }
-      await materials.markPublished(p.id, { videoId, format, at: Date.now(), asChannelTrailer: trailer });
-      res.json({ videoId, trailer, trailerError, material: await materials.get(p.id) });
+      await materials.markPublished(p.id, { videoId, format, at: Date.now(), asChannelTrailer: trailer, thumbnail: thumbOk });
+      res.json({ videoId, trailer, trailerError, thumbnail: thumbOk, thumbnailError: thumbError, material: await materials.get(p.id) });
     } catch (err) {
       fail(res, err);
     }

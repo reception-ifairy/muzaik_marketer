@@ -5,37 +5,135 @@
     {
       "czesc": "Na start",
       "strony": [
-        { "slug": "witaj", "tytul": "Witaj w MuzaIK Marketer", "opis": "Do czego jest aplikacja, co jest w którym widoku i od czego zacząć.", "panel": "#pulpit" },
-        { "slug": "centrum", "tytul": "Centrum: dane kanału i materiały", "opis": "Ekran po zalogowaniu: co aplikacja wie o kanale, szybki start i lista materiałów.", "panel": "#pulpit" }
+        {
+          "slug": "witaj",
+          "tytul": "Witaj w MuzaIK Marketer",
+          "opis": "Do czego jest aplikacja, co jest w którym widoku i od czego zacząć.",
+          "panel": "#pulpit"
+        },
+        {
+          "slug": "centrum",
+          "tytul": "Centrum: dane kanału i materiały",
+          "opis": "Ekran po zalogowaniu: co aplikacja wie o kanale, szybki start i lista materiałów.",
+          "panel": "#pulpit"
+        }
       ]
     },
     {
       "czesc": "Produkcja wideo",
       "strony": [
-        { "slug": "zwiastun", "tytul": "Zwiastun kanału krok po kroku", "opis": "Od briefu do filmu: utwór, sceny, plan ujęć, klipy z Flow, montaż i wysyłka na YouTube.", "panel": "#studio" },
-        { "slug": "materialy", "tytul": "Shorts, premiery i promocje", "opis": "Pozostałe rodzaje materiałów i czym się różnią: Short, premiera, radio, Szkoła, Magazyn.", "panel": "#studio" },
-        { "slug": "google-flow", "tytul": "Klipy w Google Flow", "opis": "Jak z promptu ujęcia zrobić klip we Flow i wgrać go z powrotem do Studia.", "panel": "#studio" },
-        { "slug": "montaz-i-youtube", "tytul": "Montaż i wysyłka na YouTube", "opis": "Co robi montaż, skąd muzyka, pliki do pobrania, wysyłka jako prywatny i zwiastun kanału.", "panel": "#studio" }
+        {
+          "slug": "zwiastun",
+          "tytul": "Zwiastun kanału krok po kroku",
+          "opis": "Od briefu do filmu: utwór, sceny, plan ujęć, klipy z Flow, montaż i wysyłka na YouTube.",
+          "panel": "#studio"
+        },
+        {
+          "slug": "materialy",
+          "tytul": "Shorts, premiery i promocje",
+          "opis": "Pozostałe rodzaje materiałów i czym się różnią: Short, premiera, radio, Szkoła, Magazyn.",
+          "panel": "#studio"
+        },
+        {
+          "slug": "google-flow",
+          "tytul": "Klipy w Google Flow",
+          "opis": "Jak z promptu ujęcia zrobić klip we Flow i wgrać go z powrotem do Studia.",
+          "panel": "#studio"
+        },
+        {
+          "slug": "montaz-i-youtube",
+          "tytul": "Montaż i wysyłka na YouTube",
+          "opis": "Co robi montaż, skąd muzyka, pliki do pobrania, wysyłka jako prywatny i zwiastun kanału.",
+          "panel": "#studio"
+        },
+        {
+          "slug": "miniatura-i-kontrola",
+          "tytul": "Miniatura, lektor i kontrola zasad",
+          "opis": "Miniatura z napisem, lektor DJ MuzaIK, preset estetyczny, warianty i lista kontrolna zasad kanału.",
+          "panel": "#studio"
+        }
       ]
     },
     {
       "czesc": "Ustawienia i pomoc",
       "strony": [
-        { "slug": "ustawienia", "tytul": "Ustawienia: AI, MuzaIK i YouTube", "opis": "Silnik AI, klucz AzuraCast do plików utworów, połączenie z kanałem YouTube.", "panel": null },
-        { "slug": "gdy-cos-nie-dziala", "tytul": "Gdy coś nie działa", "opis": "Najczęstsze komunikaty i co z nimi zrobić.", "panel": null },
-        { "slug": "co-nowego", "tytul": "Co nowego", "opis": "Zmiany w aplikacji opisane dla właścicielki, od najnowszych.", "panel": null }
+        {
+          "slug": "ustawienia",
+          "tytul": "Ustawienia: AI, MuzaIK i YouTube",
+          "opis": "Silnik AI, klucz AzuraCast do plików utworów, połączenie z kanałem YouTube.",
+          "panel": null
+        },
+        {
+          "slug": "profil-kanalu",
+          "tytul": "Profil kanału (dane wstępne)",
+          "opis": "Profil z modułu AI Studio: co jest placeholderem, jak wgrać konfigurację JSON, czego nie przejęto.",
+          "panel": null
+        },
+        {
+          "slug": "gdy-cos-nie-dziala",
+          "tytul": "Gdy coś nie działa",
+          "opis": "Najczęstsze komunikaty i co z nimi zrobić.",
+          "panel": null
+        },
+        {
+          "slug": "co-nowego",
+          "tytul": "Co nowego",
+          "opis": "Zmiany w aplikacji opisane dla właścicielki, od najnowszych.",
+          "panel": null
+        }
       ]
     }
   ],
   "docs": [
-    { "plik": "00-architektura.md", "tytul": "Architektura", "opis": "Skąd aplikacja wyrosła, moduły serwera i klienta, przepływ danych materiału." },
-    { "plik": "01-wdrozenie.md", "tytul": "Wdrożenie", "opis": "Zmienne środowiskowe, serwer muzaik, pm2, nginx, ffmpeg, katalogi danych." },
-    { "plik": "02-dane-muzaik.md", "tytul": "Dane z muzaik.channel", "opis": "Most do muzaik.db tylko do odczytu: tabele, mapowanie kart i scen, audio, obrazy." },
-    { "plik": "03-studio-i-plan.md", "tytul": "Studio: cięcie muzyki i plan ujęć", "opis": "chooseCut, siatka taktów, MATERIAL_SYSTEM, MaterialDraftSchema, finalizeDraft, cleanCopy." },
-    { "plik": "04-montaz.md", "tytul": "Montaż (ffmpeg)", "opis": "renderProject: segmenty ujęć, Parallax, plansze, muzyka −14 LUFS, dwa formaty." },
-    { "plik": "05-youtube.md", "tytul": "YouTube: wysyłka i zwiastun kanału", "opis": "OAuth tylko kanału MuzaIK, wysyłka prywatna, brandingSettings przy zwiastunie." },
-    { "plik": "06-testy.md", "tytul": "Testy i sprawdzanie", "opis": "lint, testy jednostkowe, atrapy muzaik i Claude, przejście Playwright, czego nie sprawdzono." },
-    { "plik": "07-decyzje.md", "tytul": "Decyzje właścicielki", "opis": "Co postanowiła właścicielka i czego przez to nie robimy." },
-    { "plik": "CHANGELOG.md", "tytul": "Historia zmian", "opis": "Wszystkie zmiany od najnowszych. Każda zmiana w aplikacji = wpis tutaj." }
+    {
+      "plik": "00-architektura.md",
+      "tytul": "Architektura",
+      "opis": "Skąd aplikacja wyrosła, moduły serwera i klienta, przepływ danych materiału."
+    },
+    {
+      "plik": "01-wdrozenie.md",
+      "tytul": "Wdrożenie",
+      "opis": "Zmienne środowiskowe, serwer muzaik, pm2, nginx, ffmpeg, katalogi danych."
+    },
+    {
+      "plik": "02-dane-muzaik.md",
+      "tytul": "Dane z muzaik.channel",
+      "opis": "Most do muzaik.db tylko do odczytu: tabele, mapowanie kart i scen, audio, obrazy."
+    },
+    {
+      "plik": "03-studio-i-plan.md",
+      "tytul": "Studio: cięcie muzyki i plan ujęć",
+      "opis": "chooseCut, siatka taktów, MATERIAL_SYSTEM, MaterialDraftSchema, finalizeDraft, cleanCopy."
+    },
+    {
+      "plik": "04-montaz.md",
+      "tytul": "Montaż (ffmpeg)",
+      "opis": "renderProject: segmenty ujęć, Parallax, plansze, muzyka −14 LUFS, dwa formaty."
+    },
+    {
+      "plik": "05-youtube.md",
+      "tytul": "YouTube: wysyłka i zwiastun kanału",
+      "opis": "OAuth tylko kanału MuzaIK, wysyłka prywatna, brandingSettings przy zwiastunie."
+    },
+    {
+      "plik": "06-testy.md",
+      "tytul": "Testy i sprawdzanie",
+      "opis": "lint, testy jednostkowe, atrapy muzaik i Claude, przejście Playwright, czego nie sprawdzono."
+    },
+    {
+      "plik": "07-decyzje.md",
+      "tytul": "Decyzje właścicielki",
+      "opis": "Co postanowiła właścicielka i czego przez to nie robimy."
+    },
+    {
+      "plik": "08-modul-ai-studio.md",
+      "tytul": "Moduł z Google AI Studio",
+      "opis": "Analiza „YT Music Teaser”: co przeniesiono, czego nie i dlaczego; profil, presety, kontrola zasad."
+    },
+    {
+      "plik": "CHANGELOG.md",
+      "tytul": "Historia zmian",
+      "opis": "Wszystkie zmiany od najnowszych. Każda zmiana w aplikacji = wpis tutaj."
+    }
   ]
 }

@@ -2,6 +2,11 @@
 
 **Zakres:** co postanowiła właścicielka i czego przez to nie robimy. Od najnowszych. **Stan na:** 2026-11-08.
 
+## 2026-11-08 — moduł z Google AI Studio
+
+- Właścicielka: przeanalizować moduł „YT Music Teaser”, dodać to, co najlepsze; **dane z modułu traktować jako placeholdery do wymiany**, dopóki nie będzie konfiguracji ze skryptu. Czego nie robimy: nie traktujemy profilu jako faktów (prompt to mówi), nie bierzemy z niego utworów ani dat.
+- **⚠️ Do sprawdzenia** (sprzeczności modułu z zasadami muzaik.channel, czekają na decyzję): głos opisu (Twórczyni 1. os. ż. czy DJ w 3. os.), fiolet (marka muzaik ma fiolet w kolorach; moduł go ogranicza), sklep store.vizai.art w opisach, covery „is_cleared”.
+
 ## 2026-11-08 — start projektu
 
 Przyjęte propozycje z planu:

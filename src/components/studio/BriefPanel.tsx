@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Clapperboard, Music, Upload, Loader2, AlertTriangle, Wand2 } from 'lucide-react';
 import { MATERIAL_KINDS, MATERIAL_KIND_IDS, type MaterialKind, type MaterialRequest, type VideoFormat } from '../../material';
 import { FLOW_MODELS, DEFAULT_FLOW_MODEL } from '../../flow';
+import { AESTHETIC_PRESETS, getPreset } from '../../profile';
 import type { MuzaikOverview, TrackCard } from '../../muzaik';
 import { AUDIO_LABEL, muzaikApi, type AudioAvailability } from '../../lib/materialsClient';
 import { cn } from '../../lib/utils';
@@ -13,6 +14,13 @@ export interface BriefPreset {
   kind: MaterialKind;
   trackId?: number | null;
   premiereId?: number | null;
+  /** Variant of an existing project: same sources, other length/format. */
+  seconds?: number;
+  format?: VideoFormat;
+  sceneIds?: string[];
+  preset?: string | null;
+  voiceover?: boolean;
+  notes?: string;
   nonce: number;
 }
 
@@ -69,6 +77,8 @@ export default function BriefPanel({ muzaik, preset, busy, engineReady, onOpenSe
   const [sceneIds, setSceneIds] = React.useState<string[]>([]);
   const [topic, setTopic] = React.useState('');
   const [notes, setNotes] = React.useState('');
+  const [look, setLook] = React.useState<string>('');
+  const [voiceover, setVoiceover] = React.useState(false);
   const [audio, setAudio] = React.useState<AudioAvailability | null>(null);
   const [uploading, setUploading] = React.useState<number | null>(null);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
@@ -92,6 +102,12 @@ export default function BriefPanel({ muzaik, preset, busy, engineReady, onOpenSe
     pickKind(preset.kind);
     if (preset.trackId !== undefined) setTrackId(preset.trackId);
     if (preset.premiereId !== undefined) setPremiereId(preset.premiereId);
+    if (preset.seconds) setSeconds(preset.seconds);
+    if (preset.format) setFormat(preset.format);
+    if (preset.sceneIds) setSceneIds(preset.sceneIds);
+    if (preset.preset !== undefined) setLook(preset.preset ?? '');
+    if (preset.voiceover !== undefined) setVoiceover(preset.voiceover);
+    if (preset.notes !== undefined) setNotes(preset.notes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset?.nonce]);
 
@@ -136,7 +152,7 @@ export default function BriefPanel({ muzaik, preset, busy, engineReady, onOpenSe
 
   const submit = () => {
     if (missing || busy) return;
-    onSubmit({ kind, seconds, format, alsoOther, freeOnly, flowModel, trackId, premiereId: kind === 'premiera' ? premiereId : null, articleSlug: kind === 'magazyn' ? articleSlug : null, sceneIds, topic, notes });
+    onSubmit({ kind, seconds, format, alsoOther, freeOnly, flowModel, trackId, premiereId: kind === 'premiera' ? premiereId : null, articleSlug: kind === 'magazyn' ? articleSlug : null, sceneIds, topic, notes, preset: look || null, voiceover });
   };
 
   return (
@@ -168,6 +184,7 @@ export default function BriefPanel({ muzaik, preset, busy, engineReady, onOpenSe
         <div className="flex flex-col gap-1">
           <Toggle on={alsoOther} onChange={setAlsoOther}>Zrób też drugi format ({format === '16:9' ? '9:16' : '16:9'})</Toggle>
           <Toggle on={freeOnly} onChange={setFreeOnly}>Tylko bez kosztu — sceny Parallax, okładka i plansze, bez Flow</Toggle>
+          <Toggle on={voiceover} onChange={setVoiceover}>Lektor DJ MuzaIK — kilka krótkich kwestii (Gemini TTS przy montażu, płatne wg cennika Google)</Toggle>
         </div>
       </section>
 
@@ -253,6 +270,19 @@ export default function BriefPanel({ muzaik, preset, busy, engineReady, onOpenSe
 
       {/* 3. Notes + go */}
       <section className="panel p-4 flex flex-col gap-3 min-h-0" aria-label="Wskazówki i start">
+        <label className="block shrink-0">
+          <span className="field-label">Preset estetyczny</span>
+          <select value={look} onChange={(e) => setLook(e.target.value)} className="field h-12" aria-label="Preset estetyczny">
+            <option value="">{kind === 'zwiastun' ? 'Z profilu kanału (flagowy)' : 'Dobierze DJ (wg utworu i sceny)'}</option>
+            {AESTHETIC_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.subtitle}</option>)}
+          </select>
+          {getPreset(look) && (
+            <span className="mt-1.5 flex items-center gap-1.5">
+              {getPreset(look)!.paletteHex.map((c) => <span key={c} className="w-5 h-5 rounded-md border border-white/20" style={{ background: c }} title={c} />)}
+              <span className="text-xs text-slate-400 line-clamp-1 ml-1">{getPreset(look)!.lighting}</span>
+            </span>
+          )}
+        </label>
         {!freeOnly && (
           <label className="block shrink-0">
             <span className="field-label">Model w Google Flow</span>

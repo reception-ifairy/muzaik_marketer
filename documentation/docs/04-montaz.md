@@ -25,3 +25,9 @@ Każdy format renderowany osobno (`VIDEO_SIZE`: 1920×1080, 1080×1920) — plan
 Jeden montaż naraz (`MaterialService.rendering`); stan w projekcie (`running` z krokiem, `done` z plikami i ostrzeżeniami, `error`). Stan `running` po restarcie procesu jest pokazywany jako błąd „Render przerwany”. ffmpeg uruchamiany przez `nice -n 10`.
 
 > **Nie rób tego.** Nie dodawaj tekstu do promptów wideo „żeby było szybciej” — napisy zawsze z `drawCard()`.
+
+## Napisy, lektor, miniatura
+
+- `overlayText` → `drawOverlay` (przezroczysty PNG, dolna część kadru) → `addOverlay` (wejście i wyjście z przenikaniem).
+- Lektor: WAV z `voiceovers()` → `adelay` do `shot.at + 0,2 s`, `amix`, `sidechaincompress` na muzyce (threshold 0,02, ratio 8), potem `loudnorm`. Sprawdzone na atrapie: głos tylko w swoim ujęciu.
+- Miniatura: `frameAt` (ujęcie z obrazem pod refrenem, inaczej najdłuższe) / `composeScene` / `coverStill` → `drawThumbnail`.

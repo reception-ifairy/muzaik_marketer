@@ -36,3 +36,7 @@ Tytuł bez samego „MuzaIK” (zostaje „DJ MuzaIK”), ≤ 100 znaków; opis 
 1. `MATERIAL_KINDS` w `src/material.ts` (cel, długości, format, czy potrzebny utwór, napis końcowy).
 2. Ewentualnie `LEAD_SHARE` w `src/beat.ts` i `endCardText` / stopka w `cleanCopy`.
 3. Pole w `BriefPanel`, walidacja w `MaterialService.context()`, test w `test/material.test.ts`, strona [materiały](#handbook/materialy).
+
+## Dodane z modułu AI Studio
+
+Prompt dostaje też profil kanału (`materialPrompt.profile`), preset (`preset`), akty i informację o lektorze. `finalizeDraft` dodatkowo: kamera i światło do `flowPrompt`, `purpleRule()`, napis ≤ 5 słów, lektor tylko przy `request.voiceover` i skrócony do `voiceoverMaxChars(seconds)`, czyszczenie `AI_TOOL_NAMES` i imienia twórczyni, miniatura (prompt + ≤ 3 propozycje po ≤ 3 słowa). `cleanCopy` bierze dozwolone linki z profilu (`allowedHosts`) i dopisuje je do stopki, czyści przypięty komentarz. `selfCheck()` — [szczegóły](#docs/modul-ai-studio).

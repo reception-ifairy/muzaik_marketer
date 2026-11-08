@@ -1,8 +1,8 @@
 import React from 'react';
-import { KeyRound, Cpu, AudioLines, Image as ImageIcon, CheckCircle2, AlertTriangle, CircleDashed, Loader2, RefreshCw, Trash2, Save, Database, Square, Radio, Youtube } from 'lucide-react';
+import { KeyRound, Cpu, AudioLines, Image as ImageIcon, CheckCircle2, AlertTriangle, CircleDashed, Loader2, RefreshCw, Trash2, Save, Database, Square, Radio, Youtube, UserRound } from 'lucide-react';
 import { KEY_PROVIDER_IDS, MALE_VOICES, PROVIDER_IDS, PROVIDER_INFO, type AiSettings, type KeyProvider, type ModelInfo, type ProviderStatus } from '../aiSettings';
 import ImagesTab from './settings/ImagesTab';
-import { MuzaikTab, YoutubeTab } from './settings/MuzaikTab';
+import { MuzaikTab, ProfileTab, YoutubeTab } from './settings/MuzaikTab';
 import type { Effort } from '../types';
 import { useAiSettings } from '../lib/aiSettingsContext';
 import { speak, useSpeech } from '../lib/speech';
@@ -16,11 +16,12 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type Tab = 'engine' | 'keys' | 'muzaik' | 'youtube' | 'images' | 'voice';
+type Tab = 'engine' | 'keys' | 'profile' | 'muzaik' | 'youtube' | 'images' | 'voice';
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { id: 'engine', label: 'Silnik AI', icon: Cpu },
   { id: 'keys', label: 'Klucze API', icon: KeyRound },
+  { id: 'profile', label: 'Profil', icon: UserRound },
   { id: 'muzaik', label: 'MuzaIK', icon: Radio },
   { id: 'youtube', label: 'YouTube', icon: Youtube },
   { id: 'images', label: 'Obrazy', icon: ImageIcon },
@@ -82,6 +83,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           {prefsError && <p className="text-sm text-rose-300">{prefsError}</p>}
           {tab === 'engine' && <EngineTab settings={settings} update={update} goToKeys={() => setTab('keys')} />}
           {tab === 'keys' && <KeysTab settings={settings} />}
+          {tab === 'profile' && <ProfileTab />}
           {tab === 'muzaik' && <MuzaikTab />}
           {tab === 'youtube' && <YoutubeTab />}
           {tab === 'images' && <ImagesTab settings={settings} update={update} goToKeys={() => setTab('keys')} />}

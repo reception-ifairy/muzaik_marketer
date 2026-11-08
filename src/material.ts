@@ -76,6 +76,11 @@ export const ShotDraftSchema = z.object({
   reference: z.string().nullable().describe('Dla frames/ingredients: który obraz dać do Flow — „warstwa N sceny <tytuł>” albo „okładka”. null dla text.'),
   sceneId: z.string().nullable().describe('Dla visual=parallax (albo jako kotwica stylu): id sceny z listy. null gdy brak.'),
   cardText: z.string().nullable().describe('Dla visual=plansza: krótki napis po polsku (najwyżej 6 słów). null dla pozostałych.'),
+  camera: z.string().describe('Po angielsku: plan, ruch kamery i obiektyw, np. "close-up, slow dolly-in, 50mm".'),
+  light: z.string().describe('Po angielsku: światło i faktura ujęcia.'),
+  transition: z.string().describe('Po polsku: jak ujęcie wchodzi i wychodzi, zsynchronizowane z beatem (np. „cięcie na pierwszą miarę taktu”).'),
+  overlayText: z.string().nullable().describe('Napis nakładany przez program na obraz ujęcia (po polsku, najwyżej 5 słów) albo null. Rzadko — 1–2 na film.'),
+  voiceover: z.string().nullable().describe('Kwestia lektora DJ MuzaIK w tym ujęciu (po polsku, krótko, mieści się w czasie ujęcia) albo null.'),
   note: z.string().describe('Notatka po polsku dla właścicielki: co ma się dziać w ujęciu i dlaczego.'),
 });
 
@@ -84,11 +89,16 @@ export const MaterialDraftSchema = z.object({
   hook: z.string().describe('Co widz zobaczy w pierwszych 2 sekundach i dlaczego zostanie — po polsku.'),
   styleAnchor: z.string().describe('Jedno zdanie po angielsku: wspólny styl wizualny dopisywany do każdego promptu (paleta, światło, faktura, epoka).'),
   shots: z.array(ShotDraftSchema),
+  thumbnail: z.object({
+    prompt: z.string().describe('Po angielsku: prompt obrazu miniatury 16:9 (do Nano Banana we Flow), bez tekstu w obrazie, z miejscem na napis.'),
+    overlayOptions: z.array(z.string()).describe('3 propozycje napisu na miniaturę po polsku, każda najwyżej 3 słowa.'),
+  }),
   copy: z.object({
-    title: z.string().describe('Tytuł filmu na YouTube, po polsku.'),
+    title: z.string().describe('Tytuł filmu na YouTube, po polsku, najlepiej do 60 znaków.'),
     description: z.string().describe('Opis filmu po polsku, w pierwszej osobie w rodzaju żeńskim (pisze Twórczyni MuzaIK), 2–4 krótkie akapity, bez linków (stopkę dopisze program).'),
     tags: z.array(z.string()),
     hashtags: z.array(z.string()),
+    pinnedComment: z.string().describe('Przypięty komentarz pod filmem, po polsku, 1–2 zdania, zachęta do rozmowy (bez linków).'),
   }),
 });
 
@@ -131,6 +141,25 @@ export interface MaterialCopy {
   description: string;
   tags: string[];
   hashtags: string[];
+  pinnedComment: string;
+}
+
+export interface MaterialThumbnail {
+  prompt: string;
+  overlayOptions: string[];
+  /** Rendered JPEG (1280×720) in the project folder, with the text chosen by the owner. */
+  file: string | null;
+  text: string | null;
+}
+
+/** One rule of the channel, checked by code on every change (from the AI Studio module's self-check, adapted). */
+export interface SelfCheck {
+  id: string;
+  label: string;
+  ok: boolean;
+  /** 'error' blocks nothing but is shown red; 'warn' is advice. */
+  level: 'error' | 'warn';
+  detail: string;
 }
 
 export interface MaterialRequest {
@@ -148,6 +177,10 @@ export interface MaterialRequest {
   flowModel: string;
   /** Allow free rendered shots only (Parallax, cover, cards) — no Flow cost. */
   freeOnly: boolean;
+  /** Aesthetic preset id (src/profile.ts) or null = from the channel profile / scenes. */
+  preset: string | null;
+  /** DJ MuzaIK voice-over lines, synthesised with Gemini TTS at render time (paid). */
+  voiceover: boolean;
 }
 
 export type RenderState = { state: 'none' } | { state: 'running'; step: string; startedAt: number } | { state: 'done'; at: number; files: RenderFile[]; warnings: string[] } | { state: 'error'; message: string; at: number };
@@ -164,6 +197,7 @@ export interface YoutubePublish {
   format: VideoFormat;
   at: number;
   asChannelTrailer: boolean;
+  thumbnail: boolean;
 }
 
 export interface MaterialProject {
@@ -178,6 +212,8 @@ export interface MaterialProject {
   cut: MusicCut | null;
   shots: Shot[];
   copy: MaterialCopy;
+  thumbnail: MaterialThumbnail;
+  checks: SelfCheck[];
   /** What the code changed in the model's draft (Polish, shown to the owner). */
   fixes: string[];
   render: RenderState;
@@ -196,6 +232,7 @@ export interface MaterialSummary {
   clips: { have: number; need: number };
   rendered: boolean;
   published: boolean;
+  checksFailed: number;
 }
 
 export function summarize(p: MaterialProject): MaterialSummary {
@@ -204,5 +241,6 @@ export function summarize(p: MaterialProject): MaterialSummary {
     id: p.id, kind: p.request.kind, title: p.copy.title || MATERIAL_KINDS[p.request.kind].label, trackTitle: p.trackTitle,
     seconds: p.shots.reduce((a, s) => a + s.seconds, 0), format: p.request.format, updatedAt: p.updatedAt,
     clips: { have: need.filter((s) => s.clip).length, need: need.length }, rendered: p.render.state === 'done', published: p.published.length > 0,
+    checksFailed: (p.checks ?? []).filter((c) => !c.ok && c.level === 'error').length,
   };
 }

@@ -9,6 +9,7 @@
 - **Channel copy rules** (`cleanCopy`): never „DarkaIK”/„Istrella” (`LEGACY_NAMES`), YouTube copy in the creator's voice (first person, feminine), no bare „MuzaIK” in titles (keep „DJ MuzaIK”, muzaik.channel, #MuzaIK), links only to *.muzaik.channel, no names of other artists, no listener/view counts.
 - **Hard limits by code, never the model**: bar grid (`src/beat.ts`), Flow clip lengths/modes (`FLOW_MODELS` in `src/flow.ts` with `FLOW_CHECKED`), end card text, footer, hashtags (`server/materialPlan.ts`).
 - **Text in video is drawn by code** (`drawCard`, Audiowide/Rajdhani OFL in `server/fonts/`), never by a video model; Flow prompts end with `VIDEO_HOUSE_RULES`.
+- **Channel profile values are placeholders** until the owner confirms them (`placeholder: true`); the prompt marks them as direction, not facts. Never take tracks/dates from the profile — muzaik.db is the source. `selfCheck()` (10 rules) runs after every change; keep it in sync when adding rules.
 - **YouTube writes** only on the owner's click, always `private`, made-for-kids answered explicitly, token channel checked before each write.
 - Commands added: `npm test` (tsx --test test/*.test.ts), `npm run test:handbook`, `npm run check:session`; mocks and the Playwright walk-through in `test/e2e/` (see `documentation/docs/06-testy.md`).
 
@@ -65,6 +66,7 @@ src/lib/useHashView.ts  Current view in the URL hash; each navigation pushes his
 src/lib/speech.ts / useVoiceMessage.ts  Shared TTS player; recorder -> 16 kHz WAV -> /api/voice/transcribe
 src/lib/settings.ts     localStorage helpers (per-device conveniences only) — every access wrapped in try/catch
 src/App.tsx             Login gate -> locked single-screen shell: NavRail + views (#pulpit #studio #rozmowa #badanie #styl #handbook); views stay mounted (hidden) so running work survives
+src/profile.ts          Channel profile (placeholders from the owner's AI Studio module until configured; PROFILE_CONFLICTS = what was not taken over) and 10 aesthetic presets
 src/muzaik.ts / src/material.ts / src/beat.ts / src/flow.ts   MuzaIK data types; material kinds, AI draft schema, project; bar grid (chooseCut, fitBars); Google Flow catalogue
 server/muzaikData.ts    Read-only bridge to muzaik.db (track cards, Parallax scenes, premieres, published articles, brand colours)
 server/audio.ts         Track audio (own copy → muzaik podcast cache → AzuraCast with the marketer's own key → upload) and muzaik public images

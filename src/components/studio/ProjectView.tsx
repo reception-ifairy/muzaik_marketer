@@ -1,8 +1,9 @@
 import React from 'react';
 import {
-  Copy, Check, Upload, Loader2, Trash2, Film, Layers, Image as ImageIcon, Type, Play, Download, Youtube, AlertTriangle, Pencil, Music, Info, Clapperboard,
+  Copy, Check, Upload, Loader2, Trash2, Film, Layers, Image as ImageIcon, Type, Play, Download, Youtube, AlertTriangle, Pencil, Music, Info, Clapperboard, ShieldCheck, Mic, Captions, ImagePlus,
 } from 'lucide-react';
-import { MATERIAL_KINDS, SHOT_ROLES, SHOT_VISUALS, type MaterialProject, type Shot, type ShotVisual } from '../../material';
+import { MATERIAL_KINDS, SHOT_ROLES, SHOT_VISUALS, type MaterialProject, type SelfCheck, type Shot, type ShotVisual } from '../../material';
+import { getPreset } from '../../profile';
 import { FLOW_MODE_INFO, FLOW_URL, getFlowModel } from '../../flow';
 import type { MuzaikOverview } from '../../muzaik';
 import { copyText, materialsApi, muzaikApi, seconds, youtubeApi, type YoutubeStatus } from '../../lib/materialsClient';
@@ -42,6 +43,10 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
   const [openShot, setOpenShot] = React.useState<string | null>(null);
   const [copyOpen, setCopyOpen] = React.useState(false);
   const [infoOpen, setInfoOpen] = React.useState(false);
+  const [thumbOpen, setThumbOpen] = React.useState(false);
+  const failed = project.checks.filter((c) => !c.ok && c.level === 'error').length;
+  const warned = project.checks.filter((c) => !c.ok && c.level === 'warn').length;
+  const look = getPreset(project.request.preset);
   const [uploading, setUploading] = React.useState<Record<string, number>>({});
   const [error, setError] = React.useState<string | null>(null);
   const total = project.shots.reduce((a, s) => a + s.seconds, 0);
@@ -86,6 +91,14 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
                 {project.concept}
               </Clamp>
             </div>
+            <button
+              type="button"
+              onClick={() => setInfoOpen(true)}
+              aria-label="Kontrola zasad kanału i szczegóły projektu"
+              className={cn('h-11 px-3 rounded-xl border flex items-center gap-1.5 text-sm font-semibold shrink-0 active:bg-white/10', failed ? 'border-rose-400/50 text-rose-200 bg-rose-500/10' : warned ? 'border-amber-400/40 text-amber-200' : 'border-emerald-400/40 text-emerald-200')}
+            >
+              <ShieldCheck size={17} /> {project.checks.filter((c) => c.ok).length}/{project.checks.length}
+            </button>
             <button type="button" onClick={() => setInfoOpen(true)} aria-label="Szczegóły projektu" className="h-11 w-11 rounded-xl border border-white/10 flex items-center justify-center text-slate-300 shrink-0 active:bg-white/10">
               <Info size={18} />
             </button>
@@ -146,6 +159,8 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
                   {s.visual === 'plansza' ? <span className="text-violet-200 font-semibold">„{(s.cardText ?? '').replace(/\n/g, ' / ')}” </span> : null}
                   {s.visual === 'parallax' && sc ? <span className="text-cyan-200">Scena „{sc.title}”. </span> : null}
                   {s.note}
+                  {s.overlayText && <span className="block mt-1 text-cyan-200"><Captions size={13} className="inline -mt-0.5" /> „{s.overlayText}”</span>}
+                  {s.voiceover && <span className="block mt-0.5 text-amber-200"><Mic size={13} className="inline -mt-0.5" /> {s.voiceover}</span>}
                   </span>
                 </button>
                 {s.visual === 'flow' ? (
@@ -177,6 +192,7 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
         <section className="panel p-4 shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="font-display font-semibold text-white flex-1 truncate">Opis na YouTube</h3>
+            <button type="button" onClick={() => setThumbOpen(true)} aria-label="Miniatura" className={cn('h-11 px-3 rounded-lg border text-sm flex items-center gap-2 active:bg-white/10', project.thumbnail.file ? 'border-emerald-400/40 text-emerald-200' : 'border-white/10 text-slate-200')}><ImagePlus size={15} /> Miniatura</button>
             <button type="button" onClick={() => setCopyOpen(true)} className="h-11 px-3 rounded-lg border border-white/10 text-sm text-slate-200 flex items-center gap-2 active:bg-white/10"><Pencil size={15} /> Edytuj</button>
           </div>
           <p className="mt-2 text-[15px] text-white font-semibold line-clamp-2">{project.copy.title}</p>
@@ -192,6 +208,9 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
       <Sheet open={copyOpen} onClose={() => setCopyOpen(false)} title="Opis na YouTube" icon={Youtube} tone={TONES.pink} widthClass="max-w-3xl">
         <CopyEditor project={project} onSaved={(p) => { onChange(p); setCopyOpen(false); }} />
       </Sheet>
+      <Sheet open={thumbOpen} onClose={() => setThumbOpen(false)} title="Miniatura" icon={ImagePlus} tone={TONES.pink} widthClass="max-w-3xl">
+        <ThumbnailEditor project={project} onChange={onChange} />
+      </Sheet>
       <Sheet open={infoOpen} onClose={() => setInfoOpen(false)} title="Projekt" icon={Info} tone={TONES.pink} widthClass="max-w-3xl">
         <div className="flex flex-col gap-4 text-[15px] text-slate-200">
           <div><span className="field-label">Pomysł</span><p>{project.concept}</p></div>
@@ -200,6 +219,16 @@ export default function ProjectView({ project, muzaik, onChange }: Props) {
             <div>
               <span className="field-label">Muzyka</span>
               <p className="flex gap-2"><Music size={16} className="mt-1 shrink-0 text-pink-300" />{project.cut.why} Fragment {seconds(project.cut.start)}–{seconds(project.cut.end)} utworu.</p>
+            </div>
+          )}
+          <div>
+            <span className="field-label">Kontrola zasad kanału</span>
+            <ChecksList checks={project.checks} />
+          </div>
+          {look && (
+            <div>
+              <span className="field-label">Preset estetyczny</span>
+              <p className="flex items-center gap-2">{look.paletteHex.map((c) => <span key={c} className="w-4 h-4 rounded border border-white/20" style={{ background: c }} />)} <b>{look.name}</b> — {look.subtitle}</p>
             </div>
           )}
           <div><span className="field-label">Wspólny styl (dopisany do każdego promptu)</span><p className="font-mono text-sm text-slate-300">{project.styleAnchor}</p></div>
@@ -220,14 +249,16 @@ function ShotDetails({ project, shot, sceneTitle, sceneThumb, modelLabel, onChan
   const [prompt, setPrompt] = React.useState(shot.flowPrompt);
   const [cardText, setCardText] = React.useState(shot.cardText ?? '');
   const [note, setNote] = React.useState(shot.note);
+  const [overlay, setOverlay] = React.useState(shot.overlayText ?? '');
+  const [vo, setVo] = React.useState(shot.voiceover ?? '');
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const dirty = prompt !== shot.flowPrompt || cardText !== (shot.cardText ?? '') || note !== shot.note;
+  const dirty = prompt !== shot.flowPrompt || cardText !== (shot.cardText ?? '') || note !== shot.note || overlay !== (shot.overlayText ?? '') || vo !== (shot.voiceover ?? '');
   const save = async () => {
     setSaving(true);
     setError(null);
     try {
-      const r = await materialsApi.update(project.id, { shots: [{ id: shot.id, flowPrompt: prompt, cardText, note }] });
+      const r = await materialsApi.update(project.id, { shots: [{ id: shot.id, flowPrompt: prompt, cardText, note, overlayText: overlay, voiceover: vo }] });
       onChange(r.material);
     } catch (err) {
       setError((err as Error).message);
@@ -242,6 +273,25 @@ function ShotDetails({ project, shot, sceneTitle, sceneThumb, modelLabel, onChan
         <span className="field-label">Notatka</span>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={shot.fixed} className="field h-24 py-3 resize-none" />
       </label>
+      {(shot.camera || shot.light || shot.transition) && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          {shot.camera && <><dt className="text-slate-500">Kamera</dt><dd className="font-mono text-slate-300">{shot.camera}</dd></>}
+          {shot.light && <><dt className="text-slate-500">Światło</dt><dd className="font-mono text-slate-300">{shot.light}</dd></>}
+          {shot.transition && <><dt className="text-slate-500">Przejście</dt><dd className="text-slate-300">{shot.transition}</dd></>}
+        </dl>
+      )}
+      {shot.visual !== 'plansza' && (
+        <label className="block">
+          <span className="field-label">Napis na obrazie (najwyżej 5 słów, pusty = bez napisu)</span>
+          <input value={overlay} onChange={(e) => setOverlay(e.target.value)} className="field h-12" />
+        </label>
+      )}
+      {project.request.voiceover && !shot.fixed && (
+        <label className="block">
+          <span className="field-label">Lektor DJ MuzaIK (ok. {Math.max(0, Math.floor((shot.seconds - 0.4) / 0.09))} znaków w tym ujęciu)</span>
+          <textarea value={vo} onChange={(e) => setVo(e.target.value)} className="field h-20 py-3 resize-none" />
+        </label>
+      )}
       {shot.visual === 'flow' && (
         <>
           <div className="rounded-xl bg-brand-raised border border-white/10 p-3 text-sm text-slate-300">
@@ -287,13 +337,14 @@ function CopyEditor({ project, onSaved }: { project: MaterialProject; onSaved: (
   const [title, setTitle] = React.useState(project.copy.title);
   const [description, setDescription] = React.useState(project.copy.description);
   const [tags, setTags] = React.useState(project.copy.tags.join(', '));
+  const [pinned, setPinned] = React.useState(project.copy.pinnedComment);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const save = async () => {
     setSaving(true);
     setError(null);
     try {
-      const r = await materialsApi.update(project.id, { copy: { title, description, tags: tags.split(',').map((t) => t.trim()).filter(Boolean), hashtags: project.copy.hashtags } });
+      const r = await materialsApi.update(project.id, { copy: { title, description, tags: tags.split(',').map((t) => t.trim()).filter(Boolean), hashtags: project.copy.hashtags, pinnedComment: pinned } });
       onSaved(r.material);
     } catch (err) {
       setError((err as Error).message);
@@ -310,7 +361,11 @@ function CopyEditor({ project, onSaved }: { project: MaterialProject; onSaved: (
         <span className="text-xs text-slate-500">Stopkę z linkami i hashtagi ({project.copy.hashtags.join(' ')}) program dopisuje sam przy zapisie.</span>
       </label>
       <label className="block"><span className="field-label">Tagi (po przecinku)</span><input value={tags} onChange={(e) => setTags(e.target.value)} className="field h-12" /></label>
-      <div className="flex gap-2"><CopyButton text={`${title}\n\n${description}`} label="Kopiuj tytuł i opis" /></div>
+      <label className="block">
+        <span className="field-label">Przypięty komentarz (dodajesz i przypinasz sama w YouTube)</span>
+        <textarea value={pinned} onChange={(e) => setPinned(e.target.value)} className="field h-20 py-3 resize-none" />
+      </label>
+      <div className="flex flex-wrap gap-2"><CopyButton text={`${title}\n\n${description}`} label="Kopiuj tytuł i opis" /><CopyButton text={pinned} label="Kopiuj komentarz" /></div>
       {error && <p className="text-sm text-rose-300">{error}</p>}
       <button type="button" onClick={save} disabled={saving} className="h-12 rounded-xl bg-pink-400 text-black font-semibold flex items-center justify-center gap-2">
         {saving && <Loader2 size={16} className="animate-spin" />} Zapisz opis
@@ -366,6 +421,7 @@ function PublishPanel({ project, onChange }: { project: MaterialProject; onChang
   const [file, setFile] = React.useState('');
   const [kids, setKids] = React.useState<boolean | null>(null);
   const [asTrailer, setAsTrailer] = React.useState(project.request.kind === 'zwiastun');
+  const [withThumb, setWithThumb] = React.useState(true);
   const [sending, setSending] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -377,9 +433,9 @@ function PublishPanel({ project, onChange }: { project: MaterialProject; onChang
     setSending(true);
     setError(null);
     try {
-      const r = await youtubeApi.publish(project.id, { file, madeForKids: kids, asChannelTrailer: asTrailer && project.request.kind === 'zwiastun', confirm: true });
+      const r = await youtubeApi.publish(project.id, { file, madeForKids: kids, asChannelTrailer: asTrailer && project.request.kind === 'zwiastun', withThumbnail: withThumb && Boolean(project.thumbnail.file), confirm: true });
       onChange(r.material);
-      setResult(`Wysłane jako prywatny film (ID ${r.videoId}).${r.trailer ? ' Ustawiony jako zwiastun kanału.' : ''}${r.trailerError ? ` Zwiastun kanału nie ustawiony: ${r.trailerError}` : ''}`);
+      setResult(`Wysłane jako prywatny film (ID ${r.videoId}).${r.thumbnail ? ' Miniatura ustawiona.' : ''}${r.thumbnailError ? ` Miniatura nie przeszła: ${r.thumbnailError}` : ''}${r.trailer ? ' Ustawiony jako zwiastun kanału.' : ''}${r.trailerError ? ` Zwiastun kanału nie ustawiony: ${r.trailerError}` : ''}`);
       setOpen(false);
     } catch (err) {
       setError((err as Error).message);
@@ -417,6 +473,12 @@ function PublishPanel({ project, onChange }: { project: MaterialProject; onChang
               ))}
             </div>
           </div>
+          {project.thumbnail.file && (
+            <label className="flex items-center gap-3 min-h-11">
+              <input type="checkbox" checked={withThumb} onChange={(e) => setWithThumb(e.target.checked)} className="w-5 h-5" />
+              <span>Ustaw miniaturę „{project.thumbnail.text}”</span>
+            </label>
+          )}
           {project.request.kind === 'zwiastun' && (
             <label className="flex items-center gap-3 min-h-11">
               <input type="checkbox" checked={asTrailer} onChange={(e) => setAsTrailer(e.target.checked)} className="w-5 h-5" />
@@ -433,3 +495,78 @@ function PublishPanel({ project, onChange }: { project: MaterialProject; onChang
     </section>
   );
 }
+
+function ChecksList({ checks }: { checks: SelfCheck[] }) {
+  if (!checks.length) return <p className="text-sm text-slate-500">Brak wyników — zapisz projekt jeszcze raz.</p>;
+  return (
+    <ul className="flex flex-col gap-1.5 text-sm">
+      {checks.map((c) => (
+        <li key={c.id} className="flex items-start gap-2">
+          <span className={cn('mt-0.5 shrink-0', c.ok ? 'text-emerald-300' : c.level === 'error' ? 'text-rose-300' : 'text-amber-300')}>{c.ok ? <Check size={15} /> : <AlertTriangle size={15} />}</span>
+          <span><b className="text-slate-200 font-semibold">{c.label}</b> <span className="text-slate-400">— {c.detail}</span></span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ThumbnailEditor({ project, onChange }: { project: MaterialProject; onChange: (p: MaterialProject) => void }) {
+  const t = project.thumbnail;
+  const [text, setText] = React.useState(t.text ?? t.overlayOptions[0] ?? project.trackTitle ?? '');
+  const hasFilm = project.render.state === 'done' && project.render.files.some((f) => f.format === '16:9');
+  const [source, setSource] = React.useState<'film' | 'scena' | 'okladka'>(hasFilm ? 'film' : project.request.premiereId != null ? 'okladka' : 'scena');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const make = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await materialsApi.thumbnail(project.id, text, source);
+      onChange(r.material);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (
+    <div className="flex flex-col gap-4 text-[15px] text-slate-200">
+      <p className="text-sm text-slate-400">Miniatura 1280×720 z napisem krojem kanału — robi ją program, bez kosztu. Tło: klatka z refrenu zmontowanego filmu, scena Parallax albo okładka premiery.</p>
+      <div>
+        <span className="field-label">Napis (najwyżej 3 słowa)</span>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {t.overlayOptions.map((o) => <button key={o} type="button" onClick={() => setText(o)} className={cn('h-11 px-3 rounded-lg border text-sm', text === o ? 'border-pink-400/60 bg-pink-400/15 text-pink-100' : 'border-white/10 text-slate-300')}>{o}</button>)}
+        </div>
+        <input value={text} onChange={(e) => setText(e.target.value)} className="field h-12" />
+        {words > 3 && <p className="mt-1 text-xs text-amber-300">Program weźmie pierwsze 3 słowa.</p>}
+      </div>
+      <div>
+        <span className="field-label">Tło</span>
+        <div className="flex flex-wrap gap-2" role="radiogroup">
+          {([['film', 'Klatka z filmu (16:9)'], ['scena', 'Scena Parallax'], ['okladka', 'Okładka premiery']] as const).map(([id, label]) => (
+            <button key={id} type="button" role="radio" aria-checked={source === id} onClick={() => setSource(id)} disabled={(id === 'film' && !hasFilm) || (id === 'okladka' && project.request.premiereId == null)} className={cn('h-11 px-3 rounded-lg border text-sm disabled:opacity-40', source === id ? 'border-pink-400/60 bg-pink-400/15 text-pink-100' : 'border-white/10 text-slate-300')}>{label}</button>
+          ))}
+        </div>
+      </div>
+      {error && <p className="text-sm text-rose-300">{error}</p>}
+      <button type="button" onClick={make} disabled={busy || !text.trim()} className="h-12 rounded-xl bg-pink-400 text-black font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
+        {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />} Zrób miniaturę
+      </button>
+      {t.file && (
+        <div className="flex flex-col gap-2">
+          <img src={`/api/materials/${project.id}/thumbnail.jpg?v=${encodeURIComponent(t.file)}`} alt={`Miniatura: ${t.text ?? ''}`} className="w-full rounded-xl border border-white/10" />
+          <a href={`/api/materials/${project.id}/thumbnail.jpg?download=1`} className="h-11 px-3 rounded-lg border border-white/10 text-sm text-slate-200 flex items-center gap-2 self-start"><Download size={15} /> Pobierz miniaturę</a>
+        </div>
+      )}
+      {t.prompt && (
+        <div>
+          <span className="field-label">Albo własne tło z Flow (Nano Banana) — prompt bez tekstu</span>
+          <p className="font-mono text-sm text-slate-300 line-clamp-4">{t.prompt}</p>
+          <div className="mt-2"><CopyButton text={t.prompt} /></div>
+        </div>
+      )}
+    </div>
+  );
+}
+

@@ -117,6 +117,9 @@ export interface MaterialPromptData {
   brand: string;
   topic: string;
   notes: string;
+  profile: string;
+  preset: string | null;
+  voiceover: boolean;
 }
 
 export function materialPrompt(d: MaterialPromptData): string {
@@ -142,6 +145,15 @@ export function materialPrompt(d: MaterialPromptData): string {
     '',
     'Marka:',
     d.brand,
+    '',
+    'Profil kanału:',
+    d.profile,
+    '',
+    d.preset ? `Preset estetyczny (obowiązuje w każdym ujęciu i w styleAnchor):\n${d.preset}\n` : 'Preset estetyczny: dobierz do sceny i utworu, trzymając się profilu.\n',
+    d.voiceover
+      ? 'Lektor DJ MuzaIK: włączony. Daj 2–4 krótkie kwestie (pole "voiceover") w spokojniejszych ujęciach, nie na samym refrenie; każda musi się zmieścić w czasie ujęcia (ok. 11 znaków na sekundę).'
+      : 'Lektor: wyłączony — pole "voiceover" zawsze null.',
+    'Struktura w aktach (dopasuj do taktów): 1. Hak (pierwsze 2–3 s), 2. Świat (gdzie jesteśmy), 3. Narastanie, 4. Kulminacja na refrenie, 5. plansza końcowa programu.',
     '',
     untrustedBlock('Utwór (karta z muzaik.channel)', d.track),
     untrustedBlock('Sceny Parallax kanału (id, opis, prompty warstw)', d.scenes),

@@ -42,17 +42,30 @@ export const materialsApi = {
     uploadFile<{ material: MaterialProject }>(`/api/materials/${id}/shots/${shot}/clip`, file, onProgress),
   removeClip: (id: string, shot: string) => apiCall<{ material: MaterialProject }>('DELETE', `/api/materials/${id}/shots/${shot}/clip`),
   clipUrl: (id: string, shot: string, clip: string) => `/api/materials/${id}/shots/${shot}/clip?v=${encodeURIComponent(clip)}`,
+  thumbnail: (id: string, text: string, source: string) => apiCall<{ material: MaterialProject }>('POST', `/api/materials/${id}/thumbnail`, { text, source }),
   render: (id: string) => apiCall<{ material: MaterialProject }>('POST', `/api/materials/${id}/render`),
   fileUrl: (id: string, name: string, download = false) => `/api/materials/${id}/files/${encodeURIComponent(name)}${download ? '?download=1' : ''}`,
   exportUrl: (id: string) => `/api/materials/${id}/export.md`,
+};
+
+export interface ProfileResponse {
+  profile: import('../profile').ChannelProfile;
+  conflicts: string[];
+  presets: import('../profile').AestheticPreset[];
+}
+
+export const profileApi = {
+  get: () => apiCall<ProfileResponse>('GET', '/api/muzaik/profile'),
+  save: (profile: unknown) => apiCall<ProfileResponse>('PUT', '/api/muzaik/profile', { profile }),
+  reset: () => apiCall<ProfileResponse>('POST', '/api/muzaik/profile/reset'),
 };
 
 export const youtubeApi = {
   status: () => apiCall<YoutubeStatus>('GET', '/api/youtube/status'),
   saveClient: (clientId: string, clientSecret: string) => apiCall<YoutubeStatus>('PUT', '/api/youtube/client', { clientId, clientSecret }),
   disconnect: () => apiCall<YoutubeStatus>('POST', '/api/youtube/disconnect'),
-  publish: (id: string, body: { file: string; madeForKids: boolean; asChannelTrailer: boolean; confirm: true }) =>
-    apiCall<{ videoId: string; trailer: boolean; trailerError: string | null; material: MaterialProject }>('POST', `/api/youtube/publish/${id}`, body),
+  publish: (id: string, body: { file: string; madeForKids: boolean; asChannelTrailer: boolean; withThumbnail: boolean; confirm: true }) =>
+    apiCall<{ videoId: string; trailer: boolean; trailerError: string | null; thumbnail: boolean; thumbnailError: string | null; material: MaterialProject }>('POST', `/api/youtube/publish/${id}`, body),
 };
 
 /** muzaik.channel overview, loaded once and refreshable; shared by Centrum and Studio through props. */

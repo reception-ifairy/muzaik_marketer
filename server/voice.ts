@@ -12,7 +12,7 @@ const PCM_RATE = 24_000;
 const VOICE_STYLE = 'Przeczytaj po polsku spokojnym, ciepłym, dojrzałym męskim głosem, wyraźnie i w umiarkowanym tempie:';
 
 /** Gemini TTS -> WAV bytes. Newer models return WAV; older ones return raw 16-bit PCM, which we wrap. */
-export async function synthesizeSpeech(apiKey: string, model: string, voiceName: string, text: string, signal?: AbortSignal): Promise<Buffer> {
+export async function synthesizeSpeech(apiKey: string, model: string, voiceName: string, text: string, signal?: AbortSignal, style: string = VOICE_STYLE): Promise<Buffer> {
   const clean = text.replace(/\s+/g, ' ').trim();
   if (!clean) throw new ResearchError('Brak tekstu do przeczytania.', 400);
   if (clean.length > MAX_TTS_CHARS) throw new ResearchError('Tekst jest za długi do przeczytania naraz.', 400);
@@ -20,7 +20,7 @@ export async function synthesizeSpeech(apiKey: string, model: string, voiceName:
   const ai = googleClient(apiKey);
   const response = await ai.models.generateContent({
     model,
-    contents: [{ role: 'user', parts: [{ text: `${VOICE_STYLE}\n\n${clean}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `${style}\n\n${clean}` }] }],
     config: {
       responseModalities: ['AUDIO'],
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },

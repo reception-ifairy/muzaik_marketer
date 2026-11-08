@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, FileDown, Square, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy as CopyIcon, FileDown, Square, Trash2 } from 'lucide-react';
 import type { MaterialProject, MaterialRequest } from '../../material';
 import type { MuzaikOverview } from '../../muzaik';
 import type { ProgressEvent } from '../../types';
@@ -29,6 +29,19 @@ export default function StudioView({ muzaik, openId, preset, onOpenSettings, onC
   const [events, setEvents] = React.useState<ProgressEvent[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
+  const [variant, setVariant] = React.useState<BriefPreset | null>(null);
+  const briefPreset = variant && (!preset || variant.nonce > preset.nonce) ? variant : preset;
+
+  /** Variant (from the AI Studio module): same track, scenes and look; the owner picks another length or format. */
+  const makeVariant = () => {
+    if (!project) return;
+    const r = project.request;
+    setVariant({
+      kind: r.kind, trackId: r.trackId, premiereId: r.premiereId, sceneIds: r.sceneIds, preset: r.preset, voiceover: r.voiceover,
+      format: r.format, notes: `Wariant materiału „${project.copy.title}”. Zachowaj pomysł: ${project.concept}`.slice(0, 1500), nonce: Date.now(),
+    });
+    setProject(null);
+  };
 
   React.useEffect(() => {
     if (!openId) return;
@@ -77,6 +90,7 @@ export default function StudioView({ muzaik, openId, preset, onOpenSettings, onC
         {busy && <HeaderButton tone="danger" onClick={() => { abortRef.current?.abort(); setBusy(false); }}><Square size={16} /> Przerwij</HeaderButton>}
         {project && (
           <>
+            <HeaderButton onClick={makeVariant} label="Wariant: inna długość albo format"><CopyIcon size={16} /> <span className="hidden lg:inline">Wariant</span></HeaderButton>
             <HeaderButton onClick={() => setProject(null)} label="Nowy materiał"><ArrowLeft size={16} /> <span className="hidden sm:inline">Nowy materiał</span></HeaderButton>
             <a href={materialsApi.exportUrl(project.id)} aria-label="Pobierz prompty (.md)" className="h-12 px-4 rounded-xl border bg-brand-raised border-white/10 text-slate-200 text-sm font-semibold flex items-center gap-2 whitespace-nowrap active:bg-white/10">
               <FileDown size={16} /> <span className="hidden sm:inline">Prompty .md</span>
@@ -95,7 +109,7 @@ export default function StudioView({ muzaik, openId, preset, onOpenSettings, onC
               {busy && <LiveActivity events={events} hint="DJ MuzaIK słucha karty utworu i rozpisuje ujęcia na takty…" toneClass="text-pink-400" />}
               {/* Kept mounted while designing, so a failed run leaves the brief as it was. */}
               <div className={busy ? 'hidden' : 'md:h-full'}>
-                <BriefPanel muzaik={muzaik} preset={preset} busy={busy} engineReady={engineReady} onOpenSettings={onOpenSettings} onSubmit={design} />
+                <BriefPanel muzaik={muzaik} preset={briefPreset} busy={busy} engineReady={engineReady} onOpenSettings={onOpenSettings} onSubmit={design} />
               </div>
             </>
           )}
