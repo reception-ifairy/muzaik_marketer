@@ -4,9 +4,12 @@ import { execFile } from 'child_process';
 import sharp from 'sharp';
 import { createCanvas, GlobalFonts, loadImage, type SKRSContext2D } from '@napi-rs/canvas';
 import type { BrandKit, ParallaxScene } from '../src/muzaik';
+import { computeBassCurve, decodeMono, type BassCurve } from './engine/audio';
+import { renderParallaxShot } from './engine/parallax';
 import { VIDEO_SIZE, type MaterialProject, type RenderFile, type Shot, type VideoFormat } from '../src/material';
 
-// The edit: every shot becomes an exact-length silent segment (Flow clip, animated Parallax scene, cover or text card),
+// The edit: every shot becomes an exact-length silent segment (Flow clip, Parallax scene drawn frame by frame with the
+// Parallax Studio engine and the real bass curve — server/engine/, cover or text card),
 // the segments are joined and the music cut is laid under them (fades, −14 LUFS for YouTube). Each format is rendered
 // natively (cards and scenes are laid out for 16:9 or 9:16; a Flow clip of the other shape gets a blurred fill), so the
 // 9:16 version is not a crop of the 16:9 one. Text is drawn here (Audiowide/Rajdhani, OFL) — never by a video model.
@@ -249,34 +252,6 @@ async function clipSegment(clip: string, out: string, sec: number, format: Video
   await run('ffmpeg', ['-y', '-v', 'error', '-i', clip, '-filter_complex', filter, '-map', '[v]', ...encode(n), out], signal);
 }
 
-/** The Parallax scene animated like on air: each layer drifts by its depth (Lissajous), deeper layers less. */
-async function parallaxSegment(layerFiles: { file: string; depth: number }[], intensity: number, bg: string, out: string, sec: number, format: VideoFormat, tmp: string, signal?: AbortSignal) {
-  const { width, height } = VIDEO_SIZE[format];
-  const pad = 1.16;
-  const lw = Math.round(width * pad);
-  const lh = Math.round(height * pad);
-  const prepared: { file: string; depth: number }[] = [];
-  for (const [i, l] of layerFiles.entries()) {
-    const f = path.join(tmp, `layer-${format.replace(':', 'x')}-${i}.png`);
-    await sharp(l.file).resize(lw, lh, { fit: 'cover' }).png().toFile(f);
-    prepared.push({ file: f, depth: l.depth });
-  }
-  const amp = (width * 0.035 * Math.min(100, Math.max(10, intensity))) / 50;
-  const args = ['-y', '-v', 'error', '-f', 'lavfi', '-i', `color=c=${bg}:s=${width}x${height}:r=${FPS}`];
-  for (const p of prepared) args.push('-loop', '1', '-framerate', String(FPS), '-i', p.file);
-  const chain: string[] = [];
-  let prev = '0:v';
-  prepared.forEach((p, i) => {
-    const a = (amp * p.depth).toFixed(1);
-    const label = `v${i + 1}`;
-    chain.push(`[${prev}][${i + 1}:v]overlay=x='(W-w)/2+${a}*sin(2*PI*t/9)':y='(H-h)/2+${(Number(a) * 0.6).toFixed(1)}*cos(2*PI*t/7)':eval=frame[${label}]`);
-    prev = label;
-  });
-  chain.push(`[${prev}]setsar=1[v]`);
-  args.push('-filter_complex', chain.join(';'), '-map', '[v]', ...encode(frames(sec)), out);
-  await run('ffmpeg', args, signal);
-}
-
 async function coverStill(cover: string, format: VideoFormat, out: string) {
   const { width, height } = VIDEO_SIZE[format];
   const W = width * 2;
@@ -315,6 +290,12 @@ export async function renderProject(inp: RenderInputs): Promise<{ files: RenderF
   const warnings: string[] = [];
   const files: RenderFile[] = [];
   const total = project.shots.reduce((a, s) => a + s.seconds, 0);
+  // Bass curve of the music cut (Parallax Studio engine): Parallax shots kick with the real kick drum, frame-exact.
+  let curve: BassCurve | null = null;
+  if (inp.trackFile && project.cut && project.shots.some((sh) => sh.visual === 'parallax')) {
+    inp.onStep('Krzywa basu fragmentu (silnik Parallax Studio)…');
+    curve = computeBassCurve(await decodeMono(inp.trackFile, project.cut.start, total), FPS);
+  }
 
   for (const format of formats) {
     const tag = format.replace(':', 'x');
@@ -342,7 +323,11 @@ export async function renderProject(inp: RenderInputs): Promise<{ files: RenderF
         } else {
           const layers = [];
           for (const l of [...scene.layers].sort((a, b) => a.depth - b.depth)) layers.push({ file: await inp.image(l.url), depth: l.depth });
-          await parallaxSegment(layers, scene.intensity, brand.colors.bg, out, shot.seconds, format, tmp, inp.signal);
+          const { width, height } = VIDEO_SIZE[format];
+          await renderParallaxShot({
+            layers, accent: /^#[0-9a-f]{6}$/i.test(scene.accent) ? scene.accent : brand.colors.cyan, intensity: scene.intensity || 60,
+            W: width, H: height, startFrame: Math.round(shot.at * FPS), frames: frames(shot.seconds), fps: FPS, curve, out, signal: inp.signal,
+          });
         }
       } else if (shot.visual === 'okladka') {
         if (!inp.coverUrl) {

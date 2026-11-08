@@ -13,7 +13,8 @@ import { MuzaikData } from './muzaikData';
 import { AudioError, AudioService, MAX_AUDIO_BYTES } from './audio';
 import { probeDuration, renderProject, RenderError, drawThumbnail, composeScene, frameAt, coverStill } from './render';
 import { synthesizeSpeech } from './voice';
-import { chooseCut, endCardBars } from '../src/beat';
+import { chooseCut, endCardBars, type AudioHint } from '../src/beat';
+import { analyzeSamples, decodeMono, ANALYSIS_VERSION, type TrackAnalysis } from './engine/audio';
 import { FLOW_MODELS, getFlowModel } from '../src/flow';
 import { LEGACY_NAMES, type ParallaxScene, type TrackCard } from '../src/muzaik';
 import {
@@ -133,7 +134,30 @@ export class MaterialService {
   }
 
   /** Everything the plan needs, checked: covers are refused, a track is required where the kind needs one. */
-  async context(request: MaterialRequest): Promise<PlanContext> {
+  /**
+   * Tempo and drops from the track file (Parallax Studio engine), cached per track in data/analysis/. Only when the
+   * card lacks BPM or the refrain, and only if the file is reachable — otherwise null (the cut falls back as before).
+   */
+  async analysis(track: TrackCard): Promise<TrackAnalysis | null> {
+    if (track.bpm != null && track.chorusStart != null) return null;
+    const dir = path.join(path.dirname(this.dir), 'analysis');
+    const file = path.join(dir, `${track.mediaId}.json`);
+    try {
+      const cached = JSON.parse(fs.readFileSync(file, 'utf8')) as TrackAnalysis;
+      if (cached.version === ANALYSIS_VERSION) return cached;
+    } catch { /* not cached yet */ }
+    try {
+      const audio = await this.audio.trackFile(track.mediaId);
+      const result = analyzeSamples(await decodeMono(audio));
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(result));
+      return result;
+    } catch {
+      return null;
+    }
+  }
+
+  async context(request: MaterialRequest, opts: { analyze?: boolean } = {}): Promise<PlanContext> {
     const ov = this.muzaik.overview();
     let track: TrackCard | null = null;
     if (request.trackId != null) {
@@ -148,7 +172,9 @@ export class MaterialService {
     if (request.kind === 'magazyn' && !article) throw new MaterialError('Wybierz artykuł Magazynu.');
     const wanted = request.sceneIds.map((id) => this.muzaik.scene(id)).filter((s): s is ParallaxScene => s !== null);
     const scenes = wanted.length ? wanted : ov.scenes.filter((s) => s.onAir).slice(0, 1);
-    const cut = track ? chooseCut(track, request.seconds, request.kind) : null;
+    const an = track && opts.analyze ? await this.analysis(track) : null;
+    const hint: AudioHint | null = an ? { bpm: an.bpm, bpmConfidence: an.bpmConfidence, drops: an.drops } : null;
+    const cut = track ? chooseCut(track, request.seconds, request.kind, hint) : null;
     if (track && !cut) throw new MaterialError(`Karta „${track.title}” nie ma długości utworu — odśwież pomiar w muzaik.channel.`);
     const profile = await this.profile();
     const preset = getPreset(request.preset) ?? (request.kind === 'zwiastun' ? getPreset(profile.channelTeaserPreset) : null);
@@ -157,7 +183,8 @@ export class MaterialService {
 
   async design(body: Record<string, unknown>, onStatus: (m: string) => void, signal?: AbortSignal): Promise<MaterialProject> {
     const request = this.parseRequest(body);
-    const ctx = await this.context(request);
+    onStatus('Przygotowuję fragment utworu (tempo i dropy z pliku, gdy karta ich nie ma)…');
+    const ctx = await this.context(request, { analyze: true });
     const engine = await this.providers.resolveEngine();
     if ('error' in engine) throw new MaterialError(engine.error);
     const ov = this.muzaik.overview();

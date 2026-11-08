@@ -72,6 +72,7 @@ server/muzaikData.ts    Read-only bridge to muzaik.db (track cards, Parallax sce
 server/audio.ts         Track audio (own copy → muzaik podcast cache → AzuraCast with the marketer's own key → upload) and muzaik public images
 server/materialPlan.ts  finalizeDraft (bars, Flow lengths/modes, available pictures, end card) and cleanCopy (channel copy rules) — pure, tested
 server/materials.ts     /api/materials (design SSE, edit, clips, background render, files, export.md) and /api/muzaik
+server/engine/          Ported from reception-ifairy/parallax-studio: audio.ts (decode, bass curve, BPM/drop analysis), parallax.ts (frame renderer with bass/kick, RGBA → ffmpeg). Keep numbers identical to Parallax Studio.
 server/render.ts        ffmpeg edit: per-shot segments (Flow clip / Parallax / cover / card), concat, music −14 LUFS, both formats natively
 server/youtube.ts       OAuth for the MuzaIK channel only, private resumable upload, set channel trailer (brandingSettings re-read)
 server/handbook.ts      /api/handbook (documentation/ read from disk)

@@ -2,6 +2,12 @@
 
 **Zakres:** wszystkie zmiany w aplikacji, od najnowszych. **Stan na:** 2026-11-08.
 
+## 2026-11-08 — silnik z Parallax Studio
+
+- Krzywa basu, analiza tempa i dropów, renderer klatek Parallax przeniesione z `parallax-studio` ([silnik](#docs/silnik-parallax)).
+- Ujęcia Parallax reagują na prawdziwą stopę fragmentu utworu (jak na antenie).
+- Karta bez BPM albo refrenu: tempo i drop z analizy pliku (cache, pewność ≥ 0,2).
+
 ## 2026-11-08 — elementy z modułu Google AI Studio
 
 - Profil kanału z danymi wstępnymi (placeholdery), import/eksport JSON, lista sprzeczności ([moduł](#docs/modul-ai-studio)).

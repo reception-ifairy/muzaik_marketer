@@ -2,6 +2,10 @@
 
 **Zakres:** co postanowiła właścicielka i czego przez to nie robimy. Od najnowszych. **Stan na:** 2026-11-08.
 
+## 2026-11-08 — silnik z Parallax Studio
+
+- Właścicielka: przeniesienie silnika AI z Parallax Studio wzmocni projekt. Przeniesiona darmowa część (krzywa basu, analiza, renderer). Czego nie robimy: nie kopiujemy płatnego generatora scen — **⚠️ Do sprawdzenia**: połączenie z generatorem przez API zamiast kopii.
+
 ## 2026-11-08 — moduł z Google AI Studio
 
 - Właścicielka: przeanalizować moduł „YT Music Teaser”, dodać to, co najlepsze; **dane z modułu traktować jako placeholdery do wymiany**, dopóki nie będzie konfiguracji ze skryptu. Czego nie robimy: nie traktujemy profilu jako faktów (prompt to mówi), nie bierzemy z niego utworów ani dat.

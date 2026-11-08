@@ -4,6 +4,11 @@ Zmiany w aplikacji opisane prosto, od najnowszych.
 
 **Gdzie:** cała aplikacja · **Potrzebne:** nic
 
+## 8 listopada 2026 — silnik z Parallax Studio
+
+- **Sceny Parallax w filmach pulsują z muzyką** — tak samo jak na antenie i w generatorze scen.
+- Gdy karta utworu nie ma tempa albo refrenu, program **sam je wysłuchuje z pliku** i tnie do taktów.
+
 ## 8 listopada 2026 — z modułu AI Studio
 
 - **Presety estetyczne** i **lektor DJ MuzaIK** w briefie.

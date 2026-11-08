@@ -30,12 +30,20 @@ const LEAD_SHARE: Record<MaterialKind, number> = { zwiastun: 0.4, short: 0.3, pr
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-export function chooseCut(card: Pick<TrackCard, 'bpm' | 'chorusStart' | 'excerptStart' | 'curve' | 'durationSec' | 'silenceStart' | 'silenceEnd'>, targetSec: number, kind: MaterialKind): MusicCut | null {
+/** What the file analysis (Parallax Studio engine) found, used only where the card is silent. */
+export interface AudioHint { bpm: number | null; bpmConfidence: number; drops: number[] }
+
+/** Tempo from the analysis is trusted from this autocorrelation confidence up (Parallax Studio marks < 0.2 as "unclear"). */
+export const MIN_BPM_CONFIDENCE = 0.2;
+
+export function chooseCut(card: Pick<TrackCard, 'bpm' | 'chorusStart' | 'excerptStart' | 'curve' | 'durationSec' | 'silenceStart' | 'silenceEnd'>, targetSec: number, kind: MaterialKind, hint?: AudioHint | null): MusicCut | null {
   const lo = Math.max(0, card.silenceStart || 0);
   const hi = Math.max(lo, card.durationSec - Math.max(0, card.silenceEnd || 0));
   if (hi - lo < 4) return null;
 
-  const bar = barSeconds(card.bpm);
+  const hintBpm = card.bpm == null && hint?.bpm != null && hint.bpmConfidence >= MIN_BPM_CONFIDENCE ? hint.bpm : null;
+  const bpm = card.bpm ?? hintBpm;
+  const bar = barSeconds(bpm);
   const unit = bar ?? NO_GRID_UNIT;
   let bars = Math.max(2, Math.round(targetSec / unit));
   if (bars * unit > hi - lo) bars = Math.floor((hi - lo) / unit);
@@ -47,6 +55,9 @@ export function chooseCut(card: Pick<TrackCard, 'bpm' | 'chorusStart' | 'excerpt
   if (card.chorusStart != null && card.chorusStart > lo && card.chorusStart < hi) {
     anchor = card.chorusStart;
     why = `Refren wchodzi w ${fmt(anchor)} — film buduje napięcie i trafia w refren.`;
+  } else if (hint?.drops.some((d) => d >= 15 && d > lo && d < hi)) {
+    anchor = hint.drops.find((d) => d >= 15 && d > lo && d < hi)!;
+    why = `Karta nie ma wejścia refrenu — kulminacja na pierwszym dropie z analizy pliku (${fmt(anchor)}).`;
   } else {
     const rise = biggestRise(card.curve, card.durationSec);
     if (rise != null && rise > lo && rise < hi) {
@@ -64,8 +75,8 @@ export function chooseCut(card: Pick<TrackCard, 'bpm' | 'chorusStart' | 'excerpt
   if (start + length > hi) start = hi - length;
   if (start < lo) start = lo;
   const dropAt = anchor - start >= 0 && anchor - start <= length ? round2(anchor - start) : null;
-  if (!bar) why += ` Karta nie ma tempa (BPM), więc ujęcia mają po ${NO_GRID_UNIT} s, a nie pełne takty.`;
-  else why += ` Tempo ${card.bpm} BPM → takt ${round2(bar)} s, ${bars} taktów.`;
+  if (!bar) why += ` Karta nie ma tempa (BPM), a analiza pliku go nie ustaliła, więc ujęcia mają po ${NO_GRID_UNIT} s, a nie pełne takty.`;
+  else why += ` Tempo ${bpm} BPM${hintBpm ? ` (z analizy pliku, pewność ${Math.round(hint!.bpmConfidence * 100)}%)` : ''} → takt ${round2(bar)} s, ${bars} taktów.`;
 
   return { start: round2(start), end: round2(start + length), bars, barSec: round2(unit), dropAt, grid: Boolean(bar), why };
 }

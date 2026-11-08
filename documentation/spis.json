@@ -131,6 +131,11 @@
       "opis": "Analiza „YT Music Teaser”: co przeniesiono, czego nie i dlaczego; profil, presety, kontrola zasad."
     },
     {
+      "plik": "09-silnik-parallax.md",
+      "tytul": "Silnik z Parallax Studio",
+      "opis": "Krzywa basu, analiza tempa i dropów, renderer klatek Parallax — co przeniesiono i czego nie."
+    },
+    {
       "plik": "CHANGELOG.md",
       "tytul": "Historia zmian",
       "opis": "Wszystkie zmiany od najnowszych. Każda zmiana w aplikacji = wpis tutaj."

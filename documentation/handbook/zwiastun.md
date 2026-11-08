@@ -18,7 +18,7 @@ Zwiastun kanału to krótki film dla osób, które wchodzą na kanał i jeszcze 
 
 ## 2. Plan ujęć
 
-Program najpierw wycina fragment utworu: liczy takty z tempa (BPM) i ustawia cięcie tak, żeby **refren trafił w najmocniejsze ujęcie**. Potem DJ MuzaIK rozpisuje ujęcia na takty.
+Program najpierw wycina fragment utworu: liczy takty z tempa (BPM) i ustawia cięcie tak, żeby **refren trafił w najmocniejsze ujęcie**. Gdy karta nie ma tempa albo refrenu, program sam wysłuchuje plik (tempo i dropy) — w oknie ⓘ widać, skąd wzięło się tempo. Potem DJ MuzaIK rozpisuje ujęcia na takty.
 
 Na górze widzisz oś czasu: każdy kolor to rodzaj ujęcia, biała kreska to wejście refrenu.
 

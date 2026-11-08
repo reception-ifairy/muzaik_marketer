@@ -23,7 +23,7 @@ db.exec(`
 const card = (id, tytul, extra) => db.prepare('INSERT INTO podcast_karty VALUES (?, ?, ?, 0, ?)').run(id, JSON.stringify({ tytul, brzmienie: 'Syntetyczny opis brzmienia do testów.', instrumenty: ['syntezator'], tempo: 'średnie', nastroj: ['nocny'], wokal: 'brak', oCzym: 'test', fragmentStart: 20, dlugoscSek: 60, ...extra }), 'zaakceptowana', Date.now());
 card(101, 'Utwór testowy A', { bpm: 120, refrenStart: 24, pomiar: { ciszaPoczatek: 0, ciszaKoniec: 0, krzywa: [] }, muzyka: { gatunek: 'Synthwave', energia: 7, styl: 'test synthwave' } });
 card(102, 'Utwór testowy B (cover)', { cover: true, bpm: 100 });
-card(103, 'Utwór testowy C bez tempa', { bpm: null, refrenStart: null });
+card(103, 'Utwór testowy C bez tempa', { bpm: null, refrenStart: null, pomiar: { ciszaPoczatek: 0, ciszaKoniec: 0, krzywa: [] } });
 const layers = [{ url: '/media/admin/parallax/scena-test/tlo.png', depth: 0.3 }, { url: '/media/admin/parallax/scena-test/przod.png', depth: 1 }];
 db.prepare('INSERT INTO parallax_sceny VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('scena-test', 'Scena testowa', '#22d3ee', 60, JSON.stringify(layers), '/media/admin/parallax/scena-test/mini.png', 'test', Date.now(),
   JSON.stringify({ opis: { miejsce: 'testowe miasto nocą', nastroj: ['mrok'], paleta: ['#22d3ee', '#a855f7'] }, warstwy: [{ opis: 'niebo', prompt: 'synthetic night sky' }, { opis: 'droga', prompt: 'synthetic road' }] }));
@@ -39,6 +39,13 @@ const svg = (w, h, body) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg"
 await sharp(svg(1920, 1080, '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0420"/><stop offset="1" stop-color="#5b21b6"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#g)"/><circle cx="960" cy="640" r="260" fill="#ec4899"/>')).png().toFile(path.join(pub, 'tlo.png'));
 await sharp(svg(1920, 1080, '<polygon points="0,1080 860,640 1060,640 1920,1080" fill="#111827"/><polygon points="940,640 980,640 1060,1080 860,1080" fill="#22d3ee" opacity="0.7"/>')).png().toFile(path.join(pub, 'przod.png'));
 await sharp(await sharp(path.join(pub, 'tlo.png')).composite([{ input: path.join(pub, 'przod.png') }]).png().toBuffer()).resize(480, 270).png().toFile(path.join(pub, 'mini.png'));
-execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=110:duration=60', '-f', 'lavfi', '-i', 'sine=frequency=880:duration=60', '-filter_complex', '[1]volume=0.2[b];[0][b]amix=inputs=2,volume=2', '-ac', '2', path.join(dir, 'podcast/utwory/101.mp3')]);
+// Synthetic tracks: a 55 Hz kick (beat period p) over a soft pad — enough for the bass curve and the tempo analysis.
+const kick = (bpm, file, seconds = 60) => {
+  const p = (60 / bpm).toFixed(6);
+  const expr = `0.8*exp(-mod(t\\,${p})/0.06)*sin(2*PI*55*mod(t\\,${p}))+0.08*sin(2*PI*220*t)`;
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', `aevalsrc=${expr}:s=44100:d=${seconds}`, '-ac', '2', path.join(dir, 'podcast/utwory', file)]);
+};
+kick(120, '101.mp3');
+kick(124, '103.mp3');
 
 console.log(`MUZAIK_DB_PATH=${dir}/muzaik.db MUZAIK_PUBLIC_DIR=${dir}/public MUZAIK_PODCAST_DIR=${dir}/podcast`);
